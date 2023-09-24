@@ -208,3 +208,7 @@ Shorter
 ```python
 yield from response.follow_all(css='ul.pager a', callback = self.parse)
 ```
+
+Another intersting thing this spider demonstrates is that, even if there are many quotes from the same author, we don't need to worry about visiting the same author page multiple times, because Scrapy filters out duplicate requests for us. This is because, by default, it filters out URLs already visited, and URLs already in the queue, to avoid scraping the same pages multiple times, or to avoid scraping different pages with URLs that only differ in some query parameters. This behavior can be configured by the `DUPEFILTER_CLASS` setting.
+
+An example about configuring the dupefilter can be found [here](https://docs.scrapy.org/en/latest/topics/settings.html#dupefilter-class)
