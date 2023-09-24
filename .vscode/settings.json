@@ -1,0 +1,11 @@
+{
+  "autopep8.args": ["--max-line-length", "120", "--ignore E4"],
+  "git.ignoreLimitWarning": true,
+  "sqltools.useNodeRuntime": false,
+  "files.exclude": {
+    ".venv": true,
+    "**/__pycache__": true,
+    ".gitattributes": true
+  },
+  "editor.formatOnSave": true
+}
