@@ -1,9 +1,13 @@
 import subprocess
 
-# Define the command as a list of strings
-command = ["cd", "src", "&&", "scrapy", "crawl", "quotes"]
+def run(spider_name: str, export_file: str):
+    # Define the command as a list of strings
+    command = ["cd", "src", "&&", "scrapy", "crawl", spider_name]
 
-options = ["--nolog","-o","../results/hi.csv","-s","FEED_EXPORT_ENCODING=utf-8","-a","dont_overwrite=True"]
+    options = ["--nolog","-o",f"../results/{export_file}","-a","dont_overwrite=True"]
 
-# Use subprocess to run the command
-subprocess.run(command + options, shell=True)
+    # Use subprocess to run the command
+    subprocess.run(command + options, shell=True)
+
+if __name__ == '__main__':
+    run(spider_name='authors', export_file='authors.csv')
