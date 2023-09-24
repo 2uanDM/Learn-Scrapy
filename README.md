@@ -97,3 +97,114 @@ For example, to fetch the first page of quotes from quotes.toscrape.com:
 ```bash
 scrapy shell 'http://quotes.toscrape.com/page/1/'
 ```
+
+After you run this, you should see the Scrapy shell. We can try to extract using CSS selector and XPATH following this format
+
+```bash
+>>> response.css("div.quote")
+```
+
+Each of the selectors returned by the query above allows us to run further queries on them. For example, to extract the quote text and author from the first quote on the page, we can run:
+
+```bash
+>>> quote = response.css("div.quote")[0]
+>>> text = quote.css("span.text::text").get()
+>>> author = quote.css("small.author::text").get()
+>>> tags = quote.css("div.tags a.tag::text").getall()
+```
+
+Given that tags are a list of strings, we can use `.getall()` method to get all of them:
+
+```bash
+>>> tags = quote.css("div.tags a.tag::text").getall()
+```
+
+## 5. Following links
+
+Instead of just scraping the stuff from the first two pages from quotes.toscrape.com, we can also follow the links to the detail pages and scrape the data from there.
+
+For example, we see that when starting from the first page, we have the next button at the bottom:
+
+```html
+<ul class="pager">
+  <li class="next">
+    <a href="/page/2/">Next <span aria-hidden="true">&rarr;</span></a>
+  </li>
+</ul>
+```
+
+This allow us to recursively follow the links to the next pages untils we reach the end.
+
+Let's use the scrapy shell to test this:
+
+```bash
+>>> response.css("li.next a").get()
+```
+
+Then we can extract the link from the anchor tag:
+
+```bash
+>>> response.css("li.next a::attr(href)").get()
+```
+
+We can use the `response.follow` method to generate a new request to the next page, and pass the response to the `parse` method recursively:
+
+```python
+from pathlib import Path
+from typing import Any
+
+import scrapy
+import os
+from scrapy.http import Request
+
+class QuotesSpider(scrapy.Spider):
+    name = "quotes" # The name of the spider (unique within the project)
+
+    start_urls = [
+        'https://quotes.toscrape.com/page/1/',
+    ]
+
+    def __init__(self, name: str | None = None, **kwargs = Any):
+        super().__init__(name, **kwargs)
+
+    def parse(self, response):
+        print(f'Current page: {response.url}')
+        for quote in response.css('div.quote'):
+            data = {
+                'text' : qoute.css('span.text::text').get(),
+                'author' : quote.css('small.author::text').get(),
+                'tags' : qoute.css('div.tags a.tag::text').getall()
+            }
+            yield data
+
+        next_page = response.css('li.next a::attr(href)').get()
+
+        if next_page is not None:
+            next_page = response.urljoin(next_page)
+            yield response.Request(next_page, callback = self.parse)
+
+```
+
+### A shortcut for creating Requests
+
+As a shortcut for creating Request object you can use `response.follow`
+
+We can also pass a selector to `response.follow` instead of a string; this selector should extract necessary attributes:
+
+```python
+for href in response.css('ul.pager a'):
+    yield response.follow(href, callback=self.parse)
+```
+
+To create multiple request from an iterable, you can use `response.follow_all` instead:
+
+```python
+anchors = response.css('ul.pager a')
+yield from response.follow_all(anchors, callback = self.parse)
+```
+
+Shorter
+
+```python
+yield from response.follow_all(css='ul.pager a', callback = self.parse)
+```
