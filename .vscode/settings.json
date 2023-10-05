@@ -3,7 +3,7 @@
   "git.ignoreLimitWarning": true,
   "sqltools.useNodeRuntime": false,
   "files.exclude": {
-    ".venv": true,
+    ".venv": false,
     "**/__pycache__": true,
     ".gitattributes": true
   },
