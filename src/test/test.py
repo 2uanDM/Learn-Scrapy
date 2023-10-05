@@ -1,6 +1,9 @@
-import json
+data = '3.298,86'
 
-with open('exchange_rate.jsonl', 'r') as f:
-    data = json.load(f)
+# Remove non-numeric characters
+cleaned_data = data.replace(',', '')
 
-print(data)
+# Convert to float
+parsed_float = float(cleaned_data)
+
+print(parsed_float)  # Output: 3298.86

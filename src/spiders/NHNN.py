@@ -25,7 +25,6 @@ class NHNN(scrapy.Spider):
             yield self.output
             return
         else:
-            print(response)
             self.output.update(response)
         
         # Table contains the exchange rate data of CNY
@@ -37,7 +36,6 @@ class NHNN(scrapy.Spider):
             yield self.output
             return
         else:
-            print(response)
             self.output.update(response)
         
         # Update status and return
