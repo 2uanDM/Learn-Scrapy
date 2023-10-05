@@ -1,18 +1,23 @@
 import os 
 import sys
 sys.path.append(os.getcwd())
+
 import requests
-from bs4 import BeautifulSoup as bs
 import json
-from datetime import datetime
+import io
+import base64
 import pandas as pd
 
+from datetime import datetime
+from bs4 import BeautifulSoup as bs
 from src.utils.logger import logger
+from src.utils.crawler import run_crawler
 
 class ExchangeRate:
     def __init__(self) -> None:
         self.date_slash = datetime.now().strftime('%Y/%m/%d')
         self.date_dash = datetime.now().strftime('%Y-%m-%d')
+        self.data_today = f'{self.date_slash}'
         
     def get_dollar_index_DXY(self):
         print('Getting dollar index DXY')
@@ -67,14 +72,165 @@ class ExchangeRate:
                 'data': None
             }
 
+    def __parse_excel_file(self, file_dir: str) -> dict:
+        '''
+            Return data = {
+                'USD': {
+                    'buy_cash': 23000,
+                    'buy_transfer': 23000,
+                    'sell': 23000
+                },
+                ...
+            }
+        '''
+        output: dict = {}
+        
+        df = pd.read_excel(file_dir, engine='openpyxl')
 
-    def get_exchange_rate(self):
-        pass
+        # Just get the 3 row of USD, EUR, CNY
+        df = df.iloc[[21,7,5]]
+        # Rename columns
+        df.columns = ['Name', 'Symbol', 'Buy Cash', 'Buy Transfer', 'Sell']
+        # Reset index
+        df = df.reset_index(drop=True)
+        # Extracting data
+        for row in df.iterrows():
+            symbols = ['USD', 'EUR', 'CNY']
+            current_symbol = row[1]['Symbol']
+            if current_symbol in symbols:
+                output[current_symbol] = {
+                    'buy_cash': row[1]['Buy Cash'],
+                    'buy_transfer': row[1]['Buy Transfer'],
+                    'sell': row[1]['Sell']
+                }
+        
+        return output
+            
+    def get_exchange_rate_VCB(self, date_dash: str):
+        '''
+            date_dash: str, format: '%Y-%m-%d'
+        '''
+        
+        # Download excel files 
+        print('Downloading exchange rate from VCB website...')
+        
+        url = f'https://www.vietcombank.com.vn/api/exchangerates/exportexcel?date={date_dash}'
+        
+        try:
+            response = requests.get(url=url, timeout=10)
+        except Exception as e:
+            message = f'An error occurs: {str(e)}'
+            logger(message)
+            return {
+                'status': 'error',
+                'message': message,
+                'data': None
+            }
+        
+        data = json.loads(response.text)
+        if data['FileName'] is not None:
+            # Download excel file to local
+            try:
+                file_name = f'{data["FileName"]}.xlsx'
+                save_dir = os.path.join(os.getcwd(), 'download', file_name)
+                
+                data = base64.b64decode(data['Data'])
+                with io.open(save_dir, 'wb') as f:
+                    f.write(data)
+                    
+                print(f'Save exchange rate excel file: {file_name} successfully')
+            except Exception as e:
+                message = 'An error occurs when downloading the exchange rate excel file: ' +  str(e)
+                print(message)
+                logger(message)
+                return {
+                    'status': 'error',
+                    'message': message,
+                    'data': None
+                }
+        else:
+            message = f'Does not have exchange rate file for today: {self.date_slash}'
+            print(message)
+            logger(message)
+            return {
+                'status': 'error',
+                'message': message,
+                'data': None
+            }
 
+        # Parse excel file
+        print('Parsing exchange rate excel file...')
+        try:
+            data = self.__parse_excel_file(save_dir)
+        except Exception as e:
+            message = 'An error occurs when parsing the exchange rate excel file: ' +  str(e)
+            print(message)
+            logger(message)
+            return {
+                'status': 'error',
+                'message': message,
+                'data': None
+            }
+        
+        # Delete excel file
+        os.remove(save_dir)
+        print('Delete exchange rate excel file successfully')
+        
+        return {
+            'status': 'success',
+            'message': 'Get exchange rate successfully',
+            'data': data
+        }
+        
+    def get_exchange_rate_NHNN(self):
+        print('Getting exchange rate from NHNN website...')
+        save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
+        run_crawler(spider_name='NHNN', nolog=True, filename='exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
+        print('Get exchange rate from NHNN website successfully')
+        
+        try:
+            with open(os.path.join(save_folder, 'exchange_rate.jsonl'), 'r') as f:
+                data = json.load(f)
+        except Exception as e:
+            message = 'An error occurs when reading the exchange rate jsonl file: ' +  str(e)
+            print(message)
+            logger(message)
+            return {
+                'status': 'error',
+                'message': message,
+                'data': None
+            }
+        
+        if data['status'] == 'error':
+            message = 'An error occurs when getting the exchange rate from NHNN website'
+            print(message)
+            logger(message)
+            return {
+                'status': 'error',
+                'message': message,
+                'data': None
+            }
+        
+        return {
+            'status': 'success',
+            'message': 'Get exchange rate successfully',
+            'data': data
+        }
+    
     def run(self):
         response = self.get_dollar_index_DXY()
-        print(response)
+        
+        if response['status'] == 'success':
+            self.data_today += f',{response["data"]}'
+        else:
+            print(response['message'])
+            return
+        
+        response = self.get_exchange_rate_VCB(self.date_dash)
+        
+        if response['status'] == 'success':
+            self.data_today += f',{response["data"]["USD"]["buy_cash"]},{response["data"]["EUR"]["buy_cash"]},{response["data"]["CNY"]["buy_cash"]}'
 
 if __name__=='__main__':
     exchange_rate = ExchangeRate()
-    exchange_rate.run()
+    print(exchange_rate.get_exchange_rate_NHNN())
