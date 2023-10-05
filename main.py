@@ -5,7 +5,7 @@ def run(spider_name: str, export_file: str, overwrite: bool = False):
     command = ["cd", "src", "&&", "scrapy", "crawl", spider_name]
 
     if overwrite:
-        options = ["--nolog","-o",f"../results/{export_file}"]
+        options = ["-o",f"../results/{export_file}"]
     else:
         options = ["--nolog","-o",f"../results/{export_file}","-a","dont_overwrite=True"]
 
@@ -13,4 +13,4 @@ def run(spider_name: str, export_file: str, overwrite: bool = False):
     subprocess.run(command + options, shell=True)
 
 if __name__ == '__main__':
-    run(spider_name='authors', export_file='authors.csv',overwrite=True)
+    run(spider_name='quotes', export_file='test.csv',overwrite=True)
