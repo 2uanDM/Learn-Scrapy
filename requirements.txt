@@ -10,3 +10,5 @@ pandas==2.0.3
 pyinstaller==5.13.0
 xlwings==0.30.12
 scrapy
+beautifulsoup4
+openpyxl
