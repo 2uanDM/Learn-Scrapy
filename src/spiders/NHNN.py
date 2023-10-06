@@ -1,5 +1,8 @@
+from typing import Iterable
 import scrapy
 from bs4 import BeautifulSoup as bs
+from scrapy.http import Request
+from twisted.internet.error import DNSLookupError, TCPTimedOutError, TimeoutError
 
 class NHNN(scrapy.Spider):
     name = 'NHNN'
@@ -7,6 +10,10 @@ class NHNN(scrapy.Spider):
     output = {
         'status': None,
     }
+    
+    def start_requests(self):
+        for url in self.start_urls:
+            yield Request(url=url, callback=self.parse, errback=self.handle_error)
     
     def parse(self, response):
         print('Parsing the table where contain the exchange rate data...')
@@ -20,8 +27,11 @@ class NHNN(scrapy.Spider):
         table_USD_EUR: str = tables[1].css('tbody').get()
         response = self.extract_table_usd_eur(table_USD_EUR)
         if response is None:
-            print('Cannot find USD or EUR')
+            message = 'Cannot find USD or EUR'
+            print(message)
             self.output['status'] = 'error'
+            self.output['message'] = message
+            self.output['data'] = None
             yield self.output
             return
         else:
@@ -31,8 +41,10 @@ class NHNN(scrapy.Spider):
         table_CNY: str = tables[2].css('tbody').get()
         response = self.extract_table_cny(table_CNY)
         if response is None:
-            print('Cannot find CNY')
-            self.output['status'] = 'error'
+            message = 'Cannot find CNY'
+            print(message)
+            self.output['message'] = message
+            self.output['data'] = None
             yield self.output
             return
         else:
@@ -106,3 +118,9 @@ class NHNN(scrapy.Spider):
             return {
                 'CNY': cny_exchange_rate
             }
+    
+    def handle_error(self, failure):
+        self.output['status'] = 'error'
+        self.output['message'] = repr(failure)
+        self.output['data'] = None
+        yield self.output

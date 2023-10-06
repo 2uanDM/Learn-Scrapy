@@ -186,7 +186,6 @@ class ExchangeRate:
         print('Getting exchange rate from NHNN website...')
         save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
         run_crawler(spider_name='NHNN', nolog=True, filename='exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
-        print('Get exchange rate from NHNN website successfully')
         
         try:
             with open(os.path.join(save_folder, 'exchange_rate.jsonl'), 'r') as f:
@@ -202,8 +201,7 @@ class ExchangeRate:
             }
         
         if data['status'] == 'error':
-            message = 'An error occurs when getting the exchange rate from NHNN website'
-            print(message)
+            message = 'An error occurs when getting the exchange rate from NHNN website:' +  data['message']
             logger(message)
             return {
                 'status': 'error',
@@ -211,9 +209,10 @@ class ExchangeRate:
                 'data': None
             }
         
+        print('Get exchange rate from NHNN website successfully')
         return {
             'status': 'success',
-            'message': 'Get exchange rate successfully',
+            'message': 'Get exchange rate from NHNN successfully',
             'data': data
         }
     
@@ -260,8 +259,8 @@ class ExchangeRate:
             
         # ---------====================Save the data====================---------
         try:
-            date_now = datetime.now().strftime('%Y-%m-%d')
-            exchange_rate_file = os.path.join(os.getcwd(), 'results', f'{date_now} exchange_rate.csv')
+            # date_now = datetime.now().strftime('%Y-%m-%d')
+            exchange_rate_file = os.path.join(os.getcwd(), 'results', f'exchange_rate.csv')
             if not os.path.exists(exchange_rate_file):
                 with open(exchange_rate_file, 'w', encoding='utf8') as f:
                     f.write('Date,Dollar Index DXY, USD/VND - VCB (sell), USD/VND - NHNN (sell), EUR/VND - VCB (sell),  EUR/VND - NHNN (sell), CNY/VND - VCB (sell),  CNY/VND - NHNN (sell)\n')
@@ -282,8 +281,6 @@ class ExchangeRate:
             integer = value.replace('.', '')
             return float(integer)
         
-         
-
 if __name__=='__main__':
     exchange_rate = ExchangeRate()
     exchange_rate.run()

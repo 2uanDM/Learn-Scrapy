@@ -29,7 +29,10 @@ def run_crawler(spider_name: str, **kwargs):
         command += ["-o" if overwrite is False else "-O", save_dir]
 
     if kwargs.get('nolog'):
-        command += ["--loglevel=ERROR"]
+        # command += ["--loglevel=ERROR"]
+        command += ["--nolog"]
+        
+        
 
     # Use subprocess to run the command
     subprocess.run(command)
