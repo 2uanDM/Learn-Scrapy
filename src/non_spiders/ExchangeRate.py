@@ -10,14 +10,15 @@ import pandas as pd
 
 from datetime import datetime
 from bs4 import BeautifulSoup as bs
+
 from src.utils.logger import logger
 from src.utils.crawler import run_crawler
 
-class ExchangeRate:
+from src.non_spiders.Base import Base
+
+class ExchangeRate(Base):
     def __init__(self) -> None:
-        self.date_slash = datetime.now().strftime('%m/%d/%Y')
-        self.date_dash = datetime.now().strftime('%Y-%m-%d')
-        self.data_today = f'{self.date_slash}'
+        return super().__init__()
         
     def get_dollar_index_DXY(self):
         print('Getting dollar index DXY')
@@ -45,12 +46,7 @@ class ExchangeRate:
             response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
         except Exception as e:
             message = f'An error occurs: {str(e)}'
-            logger(message)
-            return {
-                'status': 'error',
-                'message': message,
-                'data': None
-            }
+            return self.error_handler(message)
 
         # Parse the response using BeautifulSoup
         soup = bs(response.text, 'html.parser')
@@ -65,16 +61,13 @@ class ExchangeRate:
                 'data': dollar_index.text
             }
         else:
-            logger('Cannot get valid dollar index DXY')
-            return {
-                'status': 'error',
-                'message': 'Cannot get valid dollar index DXY',
-                'data': None
-            }
+            return self.error_handler('Cannot get valid dollar index DXY')
 
     def __parse_excel_file(self, file_dir: str) -> dict:
         '''
-            Return data = {
+            Return data = 
+            ```python
+            {
                 'USD': {
                     'buy_cash': 23000,
                     'buy_transfer': 23000,
@@ -82,29 +75,32 @@ class ExchangeRate:
                 },
                 ...
             }
+            ```
         '''
         output: dict = {}
         
-        df = pd.read_excel(file_dir, engine='openpyxl')
-
-        # Just get the 3 row of USD, EUR, CNY
-        df = df.iloc[[21,7,5]]
-        # Rename columns
-        df.columns = ['Name', 'Symbol', 'Buy Cash', 'Buy Transfer', 'Sell']
-        # Reset index
-        df = df.reset_index(drop=True)
-        # Extracting data
-        for row in df.iterrows():
-            symbols = ['USD', 'EUR', 'CNY']
-            current_symbol = row[1]['Symbol']
-            if current_symbol in symbols:
-                output[current_symbol] = {
-                    'buy_cash': row[1]['Buy Cash'],
-                    'buy_transfer': row[1]['Buy Transfer'],
-                    'sell': row[1]['Sell']
-                }
-        
-        return output
+        try:
+            df = pd.read_excel(file_dir, engine='openpyxl')
+            # Just get the 3 row of USD, EUR, CNY
+            df = df.iloc[[21,7,5]]
+            # Rename columns
+            df.columns = ['Name', 'Symbol', 'Buy Cash', 'Buy Transfer', 'Sell']
+            # Reset index
+            df = df.reset_index(drop=True)
+            # Extracting data
+            for row in df.iterrows():
+                symbols = ['USD', 'EUR', 'CNY']
+                current_symbol = row[1]['Symbol']
+                if current_symbol in symbols:
+                    output[current_symbol] = {
+                        'buy_cash': row[1]['Buy Cash'],
+                        'buy_transfer': row[1]['Buy Transfer'],
+                        'sell': row[1]['Sell']
+                    }
+            
+            return output
+        except Exception as e:
+            return self.error_handler('An error occurs when parsing the exchange rate Excel file: ' +  str(e))
             
     def get_exchange_rate_VCB(self, date_dash: str):
         '''
@@ -120,19 +116,16 @@ class ExchangeRate:
             response = requests.get(url=url, timeout=10)
         except Exception as e:
             message = f'An error occurs: {str(e)}'
-            logger(message)
-            return {
-                'status': 'error',
-                'message': message,
-                'data': None
-            }
+            return self.error_handler(message)
         
         data = json.loads(response.text)
         if data['FileName'] is not None:
             # Download excel file to local
             try:
-                file_name = f'{data["FileName"]}.xlsx'
-                save_dir = os.path.join(os.getcwd(), 'download', file_name)
+                file_name = data["FileName"]
+                save_folder = os.path.join(os.getcwd(), 'download')
+                os.makedirs(save_folder, exist_ok=True)
+                save_dir = os.path.join(save_folder, file_name)
                 
                 data = base64.b64decode(data['Data'])
                 with io.open(save_dir, 'wb') as f:
@@ -140,23 +133,10 @@ class ExchangeRate:
                     
                 print(f'Save exchange rate excel file: {file_name} successfully')
             except Exception as e:
-                message = 'An error occurs when downloading the exchange rate excel file: ' +  str(e)
-                print(message)
-                logger(message)
-                return {
-                    'status': 'error',
-                    'message': message,
-                    'data': None
-                }
+               return self.error_handler('An error occurs when saving the exchange rate excel file: ' +  str(e))
         else:
             message = f'Does not have exchange rate file for today: {self.date_slash}'
-            print(message)
-            logger(message)
-            return {
-                'status': 'error',
-                'message': message,
-                'data': None
-            }
+            return self.error_handler(message)
 
         # Parse excel file
         print('Parsing exchange rate excel file...')
@@ -164,13 +144,7 @@ class ExchangeRate:
             data = self.__parse_excel_file(save_dir)
         except Exception as e:
             message = 'An error occurs when parsing the exchange rate excel file: ' +  str(e)
-            print(message)
-            logger(message)
-            return {
-                'status': 'error',
-                'message': message,
-                'data': None
-            }
+            return self.error_handler(message)
         
         # Delete excel file
         os.remove(save_dir)
@@ -192,22 +166,11 @@ class ExchangeRate:
                 data = json.load(f)
         except Exception as e:
             message = 'An error occurs when reading the exchange rate jsonl file: ' +  str(e)
-            print(message)
-            logger(message)
-            return {
-                'status': 'error',
-                'message': message,
-                'data': None
-            }
+            return self.error_handler(message)
         
         if data['status'] == 'error':
             message = 'An error occurs when getting the exchange rate from NHNN website:' +  data['message']
-            logger(message)
-            return {
-                'status': 'error',
-                'message': message,
-                'data': None
-            }
+            return self.error_handler(message)
         
         print('Get exchange rate from NHNN website successfully')
         return {
@@ -232,7 +195,7 @@ class ExchangeRate:
         if response_VCB['status'] == 'error':
             print(response_VCB['message'])
             return
-        print(f'Exchange rate from VCB: {response_VCB["data"]}')
+        print(f'Exchange rate from VCB: {json.dumps(response_VCB["data"], indent=4, ensure_ascii=False)}')
 
         # ---------====================Parse the exchange rate from NHNN====================---------
         print('-'*100)
@@ -240,7 +203,7 @@ class ExchangeRate:
         if response_NHNN['status'] == 'error':
             print(response_NHNN['message'])
             return
-        print(f'Exchange rate from NHNN: {response_NHNN["data"]}')
+        print(f'Exchange rate from NHNN: {json.dumps(response_NHNN["data"], indent=4, ensure_ascii=False)}')
     
         # ---------====================Merge the data====================---------
         print('-'*100)
