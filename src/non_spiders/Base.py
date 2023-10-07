@@ -47,6 +47,7 @@ class Base():
             ```python
             1: Price block is defined by class "instrument-price_last"
             2: Price block is defined by id "last_last"
+            3: Price block is defined by class "text-5xl/9 font-bold md:text-[42px] md:leading-[60px] text-[#232526]"
             ```
             
             Return 
@@ -80,8 +81,9 @@ class Base():
         except Exception as e:
             message = f'An error occurs: {str(e)}'
             return self.error_handler(message)
-
-        soup = bs(response.text, 'html.parser')
+        
+        # Ensure that beautifulsoup can parse unicode characters
+        soup = bs(response.content.decode('utf-8'), 'html.parser')
         
         if type == 1:
             price_block = soup.find('div', {'data-test': 'instrument-header-details'})
@@ -106,10 +108,45 @@ class Base():
                 return self.error_handler(message)
 
             price: str = price_selector.text.strip()
+        elif type == 3:
+            price_selector = soup.find('div', {'class': 'text-5xl'})
+            
+            
+            if price_selector is None or price_selector == '':
+                # Handle special case     
+                result = self.__handle_special_case_type_3(response.content.decode('utf-8'))
+                if result['status'] == 'error':
+                    message = f'Cannot find price selector (type {type}) in {url}'
+                    return self.error_handler(message)
+                else:
+                    price = result['data']
+            else:
+                price: str = price_selector.text.strip()
         else:
-            message = f'Type of selector must be 1 or 2 in {url}. Value: {type}'
+            message = f'Type of selector must be 1,2 or 3 in {url}. Value: {type}'
             return self.error_handler(message)
         
+        return {
+            'status': 'success',
+            'message': 'Get price from vn investing successfully',
+            'data': price
+        }
+    
+    def __handle_special_case_type_3(self, html_str: str):
+        # Search for the first occurence of the string '<div class="text-5xl'
+        try:
+            start_index_open_div = html_str.find('<div class="text-5xl')
+            end_index_open_div = html_str.find('>', start_index_open_div)
+            
+            # Search for the first occurence of the string '</div>'
+            start_index_close_div = html_str.find('</div>', end_index_open_div)
+            
+            soup = bs(html_str[start_index_open_div: start_index_close_div + len('</div>')], 'html.parser')
+            price = soup.find('div').text.strip()
+        except Exception as e:
+            message = f'An error occurs: {str(e)}'
+            return self.error_handler(message)
+
         return {
             'status': 'success',
             'message': 'Get price from vn investing successfully',

@@ -1,1 +1,1 @@
-{"status": "error", "message": "<twisted.python.failure.Failure twisted.internet.error.DNSLookupError: DNS lookup failed: no results for hostname lookup: www.sbv.gov.vn.>", "data": null}
+{"status": "success", "USD": "25.227", "EUR": "26.648", "CNY": "3.298,86"}
