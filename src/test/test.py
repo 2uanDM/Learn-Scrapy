@@ -3,16 +3,20 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
-with open('test_brent-oil-historical-data.html', 'r', encoding='utf8') as f:
+with open('test.html', 'r', encoding='utf8') as f:
     html_content = f.read()
 
-start_index_open_div = html_content.find('<div class="text-5xl')
-end_index_open_div = html_content.find('>', start_index_open_div)
+soup = bs(html_content, 'html.parser')
 
-# Search for the first occurence of the string '</div>'
-start_index_close_div = html_content.find('</div>', end_index_open_div) + len('</div>')
+xang_vn_table = soup.find('div', {'id': 'cctb-1'})
 
-div_str = html_content[start_index_open_div: start_index_close_div]
+tbody = xang_vn_table.find('tbody')
 
-soup = bs(div_str, 'html.parser')
-print(soup.find('div').text.strip())
+rows = tbody.find_all('tr')
+
+for row in rows:
+    cells = row.find_all('td')
+    if cells[1].text.strip() == 'Xăng RON 95-III':
+        print(cells[2].text.strip())
+        break
+
