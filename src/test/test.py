@@ -3,20 +3,25 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
-with open('test.html', 'r', encoding='utf8') as f:
+with open('hihi.html', 'r', encoding='utf8') as f:
     html_content = f.read()
 
 soup = bs(html_content, 'html.parser')
 
-xang_vn_table = soup.find('div', {'id': 'cctb-1'})
+body = soup.find('body')
 
-tbody = xang_vn_table.find('tbody')
+table = body.find_all('table', {'class': 'price-board'})
 
-rows = tbody.find_all('tr')
+rows = table[0].find_all('tr')
 
-for row in rows:
+for row in rows: 
     cells = row.find_all('td')
-    if cells[1].text.strip() == 'Xăng RON 95-III':
-        print(cells[2].text.strip())
-        break
+    for cell in cells:
+        print(cell.text.strip(), end='||')
+    print()
+
+
+
+# for cell in first_row.find_all('td'):
+#     print(cell.text.strip())
 

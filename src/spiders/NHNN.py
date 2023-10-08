@@ -2,7 +2,6 @@ from typing import Iterable
 import scrapy
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
-from twisted.internet.error import DNSLookupError, TCPTimedOutError, TimeoutError
 
 class NHNN(scrapy.Spider):
     name = 'NHNN'

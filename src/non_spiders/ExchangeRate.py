@@ -78,6 +78,10 @@ class ExchangeRate(Base):
             message = f'An error occurs: {str(e)}'
             return self.error_handler(message)
         
+        if response.status_code != 200:
+            message = f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}'
+            return self.error_handler(message)
+        
         data = json.loads(response.text)
         if data['FileName'] is not None:
             # Download excel file to local

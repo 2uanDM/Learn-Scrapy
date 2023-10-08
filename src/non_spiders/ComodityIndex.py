@@ -44,18 +44,29 @@ class ComodityIndex(Base):
             'sec-ch-ua-platform': '"Windows"'
         }
         
-        try:
-            response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
-        except Exception as e:
-            return self.error_handler(f'Error when fetching url: {url} of RON 95 III: {str(e)}')
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                number_of_try += 1
+                print(f'Trying to get gasoline price in Vietnam: {number_of_try} time(s)')
+                response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
+                break
+            except Exception as e:
+                continue
+        
+        if number_of_try == 5:
+            return self.error_handler(f'Error when fetching url: {url} of gasoline price in Vietnam: {str(e)}')
+
+        if response.status_code != 200:
+            return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
+        
         
         html_content = response.text.encode('utf8')
         error_with_table = True
         data = {}
         
         try:
-            with open('test.html', 'r', encoding='utf8') as f:
-                html_content = f.read()
             soup = bs(html_content, 'html.parser')
             xang_vn_table = soup.find('div', {'id': 'cctb-1'})
             tbody = xang_vn_table.find('tbody')
@@ -66,8 +77,8 @@ class ComodityIndex(Base):
             DO_cells = rows[2].find_all('td')
             
             if RON_95_cells[1].text.strip().find('RON 95-III') != -1 and DO_cells[1].text.strip().find('DO 0,05S-II') != -1:
-                data['RON 95-III'] = RON_95_cells[2].text.strip()
-                data['DO 0,05S-II'] = DO_cells[2].text.strip()
+                data['RON 95-III'] = float(RON_95_cells[2].text.strip()) * 1000
+                data['DO 0,05S-II'] = float(DO_cells[2].text.strip()) * 1000
                 error_with_table = False
             
             if error_with_table:
@@ -81,6 +92,96 @@ class ComodityIndex(Base):
         except Exception as e:
             return self.error_handler(f'Error when extracting price of table gasoline in url {url}: {str(e)}')
     
+    def get_price_gold_vn(self) -> dict:
+        '''
+            Get gold price in Vietnam
+        '''
+
+        url = 'https://www.pnj.com.vn/blog/gia-vang/'
+        
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                number_of_try += 1
+                print(f'Trying to get gold price in Vietnam: {number_of_try} time(s)')
+                response = requests.get(url)
+                break
+            except Exception as e:
+                continue
+        
+        if number_of_try == 5:
+            return self.error_handler(f'Error when fetching url: {url} of gold price in Vietnam: {str(e)}')
+
+        if response.status_code != 200:
+            return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
+        
+        try:
+            html_content = response.text.encode('utf8')
+            soup = bs(html_content, 'html.parser')
+            tbody = soup.find('tbody', {'id': 'content-price'})
+            sjc_999_row = tbody.find_all('tr')[0]
+            sjc_999_cells = sjc_999_row.find_all('td')
+
+            if sjc_999_cells[0].text.strip().find('SJC 999.9') != -1:
+                return {
+                    'status': 'success',
+                    'message': 'Get gold price (SJC 9999) in Vietnam successfully',
+                    'data' : float(sjc_999_cells[2].text.strip().replace(',', '.')) * 10000000
+                }
+            else:
+                return self.error_handler(f'Cannot find SJC 9999 in {url}')
+        except Exception as e:
+            return self.error_handler(f'Error when extracting gold price in url {url}: {str(e)}')
+    
+    def get_price_steel_vn(self) -> dict:
+        '''
+            Get steel price in Vietnam (CB240)
+        '''
+        
+        url = "https://steelonline.vn/price-list"
+
+        payload = {}
+        headers = {
+            'authority': 'steelonline.vn',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+            'cache-control': 'max-age=0',
+            'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'none',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        }
+        
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                number_of_try += 1
+                print(f'Trying to get steel price in Vietnam: {number_of_try} time(s)')
+                response = requests.request("GET", url, headers=headers, data=payload, timeout=20),
+                break 
+            except Exception as e:
+                continue
+        
+        if number_of_try == 5:
+            return self.error_handler(f'Error when fetching url: {url} of steel price in Vietnam: {str(e)}')
+        
+        if response.status_code != 200:
+            return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
+        
+        # Parse html content
+        html_content = response.text.encode('utf8')
+        soup = bs(html_content, 'html.parser')
+        
+        
+        
+            
     def run(self):
         worldwide_gold_price_usd = self.get_price_vn_investing(
             url="https://vn.investing.com/currencies/xau-usd",
@@ -164,10 +265,10 @@ class ComodityIndex(Base):
 
 if __name__ == '__main__':
     comodity_index = ComodityIndex()
-    # comodity_index.run()
-    gas_vn = comodity_index.get_price_gasoline_vn()
     
-    print(gas_vn)
+    comodity_index.run()
+    print(comodity_index.get_price_gasoline_vn())
+    print(comodity_index.get_price_gold_vn())
     
     
     

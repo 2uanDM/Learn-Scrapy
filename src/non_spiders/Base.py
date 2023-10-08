@@ -75,11 +75,24 @@ class Base():
             'upgrade-insecure-requests': '1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
         }
+        
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                number_of_try += 1
+                print(f'Try to get price from vn investing from {url}: {number_of_try} time(s)')
+                response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
+                break
+            except Exception as e:
+                continue
+            
+        if number_of_try == 5:
+            message = f'Cannot fetch vn investing html from {url} after {number_of_try} times'
+            return self.error_handler(message)
 
-        try:
-            response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
-        except Exception as e:
-            message = f'An error occurs: {str(e)}'
+        if response.status_code != 200:
+            message = f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}'
             return self.error_handler(message)
         
         # Ensure that beautifulsoup can parse unicode characters
