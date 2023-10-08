@@ -55,7 +55,41 @@ if __name__ == '__main__':
     )
     print('DJI', dji_price_usd)
     
+    ssec_price_cny = comodity_index.get_price_vn_investing(
+        url = 'https://vn.investing.com/indices/shanghai-composite-historical-data',
+        type = 3
+    )
+    print('SSEC', ssec_price_cny)
     
+    nikkei_price_jpy = comodity_index.get_price_vn_investing(
+        url = 'https://vn.investing.com/indices/japan-ni225',
+        type = 3
+    )
+    print('Nikkei', nikkei_price_jpy)
+    
+    kospi_price_krw = comodity_index.get_price_vn_investing(
+        url = 'https://vn.investing.com/indices/kospi',
+        type = 3
+    )
+    print('KOSPI', kospi_price_krw)
+    
+    dax_price_eur = comodity_index.get_price_vn_investing(
+        url = 'https://vn.investing.com/indices/germany-30',
+        type = 3
+    )
+    print('DAX', dax_price_eur)
+    
+    cac_40_price_eur = comodity_index.get_price_vn_investing(
+        url = 'https://vn.investing.com/indices/france-40-historical-data',
+        type = 3
+    )
+    print('CAC 40', cac_40_price_eur)
+    
+    ftse_100_price_gbp = comodity_index.get_price_vn_investing(
+        url = 'https://vn.investing.com/indices/uk-100-historical-data',
+        type = 3
+    )
+    print('FTSE 100', ftse_100_price_gbp)
     
     
     
