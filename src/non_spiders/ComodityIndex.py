@@ -1,5 +1,7 @@
+import json
 import os 
 import sys
+from datetime import datetime, timedelta
 sys.path.append(os.getcwd())
 
 import requests
@@ -267,6 +269,89 @@ class ComodityIndex(Base):
         except Exception as e:
             return self.error_handler(f'Error when extracting wall tile price in url {url}: {str(e)}')
             
+    def get_price_electricity_vn(self) -> dict:
+        '''
+            Get the electricity price in Vietnam (type 3)
+        '''
+        url = "https://calc.evn.com.vn/TinhHoaDon/api/Calculate"
+        
+        current_date: str = self.date_slash
+        last_moth_date: str = (datetime.strptime(current_date, '%d/%m/%Y') - timedelta(days=29)).strftime('%d/%m/%Y')
+
+        payload = json.dumps({
+            "KIMUA_CSPK": "0",
+            "LOAI_DDO": "1",
+            "SO_HO": 1,
+            "MA_CAPDAP": "1",
+            "NGAY_DKY": last_moth_date,
+            "NGAY_CKY": current_date,
+            "NGAY_DGIA": "01/01/1900",
+            "HDG_BBAN_APGIA": [
+                {
+                "LOAI_BCS": "KT",
+                "TGIAN_BANDIEN": "KT",
+                "MA_NHOMNN": "SHBT",
+                "MA_NGIA": "A"
+                }
+            ],
+            "GCS_CHISO": [
+                {
+                "BCS": "KT",
+                "SAN_LUONG": "101",
+                "LOAI_CHISO": "DDK"
+                }
+            ]
+            })
+        headers = {
+            'Accept': 'application/json, text/plain, */*',
+            'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+            'Connection': 'keep-alive',
+            'Origin': 'https://calc.evn.com.vn',
+            'Referer': 'https://calc.evn.com.vn/',
+            'Sec-Fetch-Dest': 'empty',
+            'Sec-Fetch-Mode': 'cors',
+            'Sec-Fetch-Site': 'same-origin',
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36',
+            'content-type': 'application/json',
+            'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"'
+        }
+        
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                number_of_try += 1
+                print(f'Trying to get electricity price in Vietnam: {number_of_try} time(s)')
+                response = requests.request("POST", url, headers=headers, data=payload, timeout=10)
+                break
+            except Exception as e:
+                continue
+        
+        if number_of_try == 5:
+            return self.error_handler(f'Error when fetching url: {url} of electricity price in Vietnam: {str(e)}')
+        
+        if response.status_code != 200:
+            return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
+        
+        try:
+            data = json.loads(response.text)
+            if data['Data'] == {}:
+                return self.error_handler('Cannot find electricity price. Check the timeframe in payload again!')
+
+            list_prices: list = data['Data']['HDN_HDONCTIET']
+            # print(json.dumps(list_prices, indent=4))
+            price_per_kwh_type_3: float = list_prices[-1]['DON_GIA']
+
+            return {
+                'status': 'success',
+                'message': 'Get electricity price in Vietnam successfully',
+                'data': price_per_kwh_type_3
+            }
+        except Exception as e:
+            return self.error_handler(f'Error when extracting electricity price in url {url}: {str(e)}')
+    
     def run(self):
         worldwide_gold_price_usd = self.get_price_vn_investing(
             url="https://vn.investing.com/currencies/xau-usd",
@@ -351,11 +436,12 @@ class ComodityIndex(Base):
 if __name__ == '__main__':
     comodity_index = ComodityIndex()
     
-    comodity_index.run()
-    print(comodity_index.get_price_gasoline_vn())
-    print(comodity_index.get_price_gold_vn())
-    print(comodity_index.get_price_steel_vn())
-    print(comodity_index.get_price_wall_tile_vn())
+    # comodity_index.run()
+    # print(comodity_index.get_price_gasoline_vn())
+    # print(comodity_index.get_price_gold_vn())
+    # print(comodity_index.get_price_steel_vn())
+    # print(comodity_index.get_price_wall_tile_vn())
+    print(comodity_index.get_price_electricity_vn())
     
     
     
