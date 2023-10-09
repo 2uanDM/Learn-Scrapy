@@ -19,7 +19,6 @@ proxy = {
     'password' : 'proxyebaylam'
 }
 
-
 driver = ChromeDriver(headless=False, authenticate_proxy=proxy, download_path=os.path.join(os.getcwd(), 'download')).driver
 
 def download(url):
