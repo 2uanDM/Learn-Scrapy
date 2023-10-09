@@ -55,6 +55,8 @@ class LS_LNH(Base):
         for x in response['data']['doanh_so']:
             data_today += f',{response["data"]["doanh_so"][x]}'
         
+        data_today += '\n'
+        
         try:
             with open(self.output_file_path, 'a', encoding='utf8') as f:
                 f.write(data_today)
