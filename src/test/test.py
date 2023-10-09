@@ -8,22 +8,16 @@ with open('test.html', 'r', encoding='utf8') as f:
 
 soup = bs(html_content, 'html.parser')
 
-info = soup.find('div', {'id': 'infoProduct'})
+# Remove all the style attributes
 
-price = info.find('span', {'class': 'price'})
+for tag in soup.find_all(True):
+    tag.attrs = {}
 
-if price:
-    if price.text.strip() == '':
-        print('Cannot find price')
-    else:
-        print(price.text.strip())
+rows = soup.find_all('tr')
 
-# body = table.find('tbody')
-
-# rows = body.find_all('tr')
-
-# for row in rows:
-#     cells = row.find_all('td')
-#     if cells[2].text.strip == 'UB304':
-#         print(cells[3].text.strip())
-#         break
+for row in rows[3:10]:
+    cells = row.find_all('td')
+    for cell in cells: 
+        print(cell.text.strip(), end='||')
+    
+    print()

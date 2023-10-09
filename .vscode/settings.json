@@ -3,9 +3,14 @@
   "git.ignoreLimitWarning": true,
   "sqltools.useNodeRuntime": false,
   "files.exclude": {
-    ".venv": false,
+    ".venv": true,
     "**/__pycache__": true,
-    ".gitattributes": true
+    ".gitattributes": true,
+
+    "src/__init__.py": true,
+    "src/items.py": true,
+    "src/middlewares.py": true,
+    "src/pipelines.py": true
   },
   "editor.formatOnSave": true
 }

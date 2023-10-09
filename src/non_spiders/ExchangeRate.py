@@ -10,7 +10,6 @@ import pandas as pd
 
 from src.utils.logger import logger
 from src.utils.crawler import run_crawler
-
 from src.non_spiders.Base import Base
 
 class ExchangeRate(Base):
@@ -123,7 +122,7 @@ class ExchangeRate(Base):
     def get_exchange_rate_NHNN(self):
         print('Getting exchange rate from NHNN website...')
         save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
-        run_crawler(spider_name='NHNN', nolog=True, filename='exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
+        run_crawler(spider_name='NHNN_ExchangeRate', nolog=True, filename='exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
         
         try:
             with open(os.path.join(save_folder, 'exchange_rate.jsonl'), 'r') as f:

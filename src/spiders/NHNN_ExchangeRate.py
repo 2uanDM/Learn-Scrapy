@@ -3,8 +3,8 @@ import scrapy
 from bs4 import BeautifulSoup as bs
 from scrapy.http import Request
 
-class NHNN(scrapy.Spider):
-    name = 'NHNN'
+class NHNN_ExchangeRate(scrapy.Spider):
+    name = 'NHNN_ExchangeRate'
     start_urls = ['https://www.sbv.gov.vn/TyGia/faces/TyGia.jspx']
     output = {
         'status': None,
