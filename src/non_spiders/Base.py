@@ -12,7 +12,7 @@ class Base():
     def __init__(self) -> None:
         self.date_slash = datetime.now().strftime('%m/%d/%Y')
         self.date_dash = datetime.now().strftime('%Y-%m-%d')
-        self.data_today = f'{self.date_slash}'
+        self.data_today = ''
     
     def error_handler(self, message: str) -> dict:
         """

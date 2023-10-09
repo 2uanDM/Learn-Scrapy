@@ -137,6 +137,15 @@ class ComodityIndex(Base):
     def get_price_steel_vn(self) -> dict:
         '''
             Get steel price in Vietnam (CB240)
+            
+            Return example:
+            ```python
+            {
+                'status': 'success',
+                'message': 'Get steel price in Vietnam successfully',
+                'data': float
+            }
+            ```
         '''
         
         url = "https://steelonline.vn/price-list"
@@ -164,7 +173,7 @@ class ComodityIndex(Base):
             try:
                 number_of_try += 1
                 print(f'Trying to get steel price in Vietnam: {number_of_try} time(s)')
-                response = requests.request("GET", url, headers=headers, data=payload, timeout=20),
+                response = requests.request("GET", url, headers=headers, data=payload, timeout=20)
                 break 
             except Exception as e:
                 continue
@@ -177,10 +186,86 @@ class ComodityIndex(Base):
         
         # Parse html content
         html_content = response.text.encode('utf8')
-        soup = bs(html_content, 'html.parser')
         
+        try:
+            soup = bs(html_content, 'html.parser')
+            body = soup.find('body')
+            table = body.find_all('table', {'class': 'price-board'})
+            rows = table[0].find_all('tr')
+            d6_row = rows[2]
+            cells = d6_row.find_all('td')
+            price_cell = cells
+            
+            if price_cell[4].text.strip() == '':
+                return self.error_handler(f'Cannot find steel price type D6 in {url}')
+            else:
+                return {
+                    'status': 'success',
+                    'message': 'Get steel price in Vietnam successfully',
+                    'data': float(price_cell[4].text.strip()) * 1000
+                }
+        except Exception as e:
+            return self.error_handler(f'Error when extracting steel price in url {url}: {str(e)}')
         
+    def get_price_wall_tile_vn(self) -> dict:
+        url = "https://viglaceravietnam.com/gach-lat-nen-viglacera-ub304-30x30cm.htm"
+        payload = {}
+        headers = {
+            'authority': 'viglaceravietnam.com',
+            'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+            'accept-language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+            'cache-control': 'max-age=0',
+            'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"Windows"',
+            'sec-fetch-dest': 'document',
+            'sec-fetch-mode': 'navigate',
+            'sec-fetch-site': 'none',
+            'sec-fetch-user': '?1',
+            'upgrade-insecure-requests': '1',
+            'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+        }
         
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                number_of_try += 1
+                print(f'Trying to get wall tile price in Vietnam: {number_of_try} time(s)')
+                response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
+                break
+            except Exception as e:
+                continue
+        
+        if number_of_try == 5:
+            return self.error_handler(f'Error when fetching url: {url} of wall tile price in Vietnam: {str(e)}')
+        
+        if response.status_code != 200:
+            return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
+        
+        # Parse html content
+        
+        try:
+            html_content = response.text.encode('utf8')
+            soup = bs(html_content, 'html.parser')
+            info = soup.find('div', {'id': 'infoProduct'})
+            price = info.find('span', {'class': 'price'})
+            
+            if price:
+                if price.text.strip() == '':
+                    return self.error_handler('Cannot find price')
+                else:
+                    price = price.text.strip()[:-3]
+                    price = price.replace(',', '.')
+                    return {
+                        'status': 'success',
+                        'message': 'Get wall tile price in Vietnam successfully',
+                        'data': float(price) * 1000
+                    }
+            else:
+                return self.error_handler('Cannot find price')
+        except Exception as e:
+            return self.error_handler(f'Error when extracting wall tile price in url {url}: {str(e)}')
             
     def run(self):
         worldwide_gold_price_usd = self.get_price_vn_investing(
@@ -269,6 +354,8 @@ if __name__ == '__main__':
     comodity_index.run()
     print(comodity_index.get_price_gasoline_vn())
     print(comodity_index.get_price_gold_vn())
+    print(comodity_index.get_price_steel_vn())
+    print(comodity_index.get_price_wall_tile_vn())
     
     
     

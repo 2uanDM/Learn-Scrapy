@@ -174,8 +174,7 @@ class ExchangeRate(Base):
         data_VCB = response_VCB['data']
         data_NHNN = response_NHNN['data']
         
-        self.data_today += f'\
-            {self.date_slash} \
+        self.data_today += f'{self.date_slash} \
             ,{response_dollar_index["data"]} \
             ,{data_VCB["USD"]["sell"]} \
             ,{self.__parse_float_for_NHNN(data_NHNN["USD"])} \

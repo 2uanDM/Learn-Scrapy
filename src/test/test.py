@@ -3,25 +3,27 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
-with open('hihi.html', 'r', encoding='utf8') as f:
+with open('test.html', 'r', encoding='utf8') as f:
     html_content = f.read()
 
 soup = bs(html_content, 'html.parser')
 
-body = soup.find('body')
+info = soup.find('div', {'id': 'infoProduct'})
 
-table = body.find_all('table', {'class': 'price-board'})
+price = info.find('span', {'class': 'price'})
 
-rows = table[0].find_all('tr')
+if price:
+    if price.text.strip() == '':
+        print('Cannot find price')
+    else:
+        print(price.text.strip())
 
-for row in rows: 
-    cells = row.find_all('td')
-    for cell in cells:
-        print(cell.text.strip(), end='||')
-    print()
+# body = table.find('tbody')
 
+# rows = body.find_all('tr')
 
-
-# for cell in first_row.find_all('td'):
-#     print(cell.text.strip())
-
+# for row in rows:
+#     cells = row.find_all('td')
+#     if cells[2].text.strip == 'UB304':
+#         print(cells[3].text.strip())
+#         break
