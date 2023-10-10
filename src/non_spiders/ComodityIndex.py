@@ -1,12 +1,20 @@
 import json
-import os 
+import os
+import shutil 
 import sys
-from datetime import datetime, timedelta
+import time
 sys.path.append(os.getcwd())
 
 import requests
+import pandas as pd
 from bs4 import BeautifulSoup as bs
 from src.non_spiders.Base import Base
+from src.utils.selenium import ChromeDriver
+from datetime import datetime, timedelta
+
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
 
 class ComodityIndex(Base):
     def __init__(self) -> None:
@@ -352,6 +360,119 @@ class ComodityIndex(Base):
         except Exception as e:
             return self.error_handler(f'Error when extracting electricity price in url {url}: {str(e)}')
     
+    def get_metal_price_shfe(self) -> dict:
+        '''
+            Get metal price from shfe website using selenium
+        '''
+        
+        # auth_proxy = {
+        #     'host' : '168.227.140.130',
+        #     'port' : 12345,
+        #     'username' : 'ebay2023',
+        #     'password' : 'proxyebaylam'
+        # }
+        
+        # driver = ChromeDriver(headless=False, 
+        #                       authenticate_proxy=auth_proxy, 
+        #                       download_path=os.path.join(os.getcwd(), 'download')).driver
+
+        def download_csv(url):
+            driver.get(url)
+
+            WebDriverWait(driver,20).until(EC.visibility_of_element_located((
+                By.ID,'product_futures_delayMarket_table'
+            )))
+
+            driver.execute_script("""
+                                // Function to click the button when the table content is loaded
+                                function clickButtonWhenTableLoaded() {
+                                // Get the table element
+                                var table = document.getElementById("product_futures_delayMarket_table");
+
+                                // Check if the table content is loaded
+                                if (table && table.rows.length > 0) {
+                                    // Get the button element
+                                    var button = document.querySelector("#delayedExcel > span");
+
+                                    // Click the button
+                                    button.click();
+                                } else {
+                                    // Table content is not loaded yet, so wait for the DOMContentLoaded event to fire
+                                    document.addEventListener("DOMContentLoaded", clickButtonWhenTableLoaded);
+                                }
+                                }
+
+                                // Call the function initially
+                                clickButtonWhenTableLoaded();                     
+                                """)
+
+            time.sleep(3)
+        
+        def parse_csv(type: int):
+            '''
+                type: int
+                    ```
+                    0: steel
+                    1: copper
+                    2: aluminum
+                    ```
+            '''
+            if type not in (0,1,2):
+                print(f'Invalid type: {type} when parsing the csv of shfe')
+                return self.error_handler(f'Invalid type: {type} when parsing the csv of shfe')
+            
+            download_folder = os.path.join(os.getcwd(), 'download')
+            file_names = os.listdir(download_folder)
+            file_name = f'data_{type}.csv'
+            
+            if file_name not in file_names:
+                print()
+                return self.error_handler(f'Cannot find csv file: {file_name}')
+            try:
+                # Read csv file using pandas
+                df = pd.read_csv(os.path.join(download_folder, file_name), header=1)
+                
+                # Get the index of row where Contract is "rb2310"
+                if type == 0:
+                    index = df[df['Contract'] == 'rb2310'].index[0]
+                elif type == 1:
+                    index = df[df['Contract'] == 'cu2310'].index[0]
+                else: 
+                    index = df[df['Contract'] == 'al2310'].index[0]
+                    
+                price = df.iloc[index]['Last']
+                
+                if price is None or price == '':
+                    return self.error_handler(f'Cannot find price in csv file: {file_name}')
+                else:
+                    return {
+                        'status': 'success',
+                        'message': 'Get metal price from shfe successfully',
+                        'data': price
+                    }
+            except Exception as e:
+                return self.error_handler(f'Error when parsing csv file: {file_name} of shfe: {str(e)}')
+            
+        print(parse_csv(type=0))
+        
+        # steel_url = 'https://www.shfe.com.cn/eng/market/futures/metal/rb/'
+        # copper_url = 'https://www.shfe.com.cn/eng/market/futures/metal/cu/'
+        # aluminum_url = 'https://www.shfe.com.cn/eng/market/futures/metal/al/' 
+    
+        # shutil.rmtree(os.path.join(os.getcwd(), 'download'))
+        # os.makedirs(os.path.join(os.getcwd(), 'download'), exist_ok=True)
+    
+        # for i, url in enumerate([steel_url, copper_url, aluminum_url]):
+        #     download_csv(url)
+        #     # Rename the latest downloaded file
+        #     download_folder = os.path.join(os.getcwd(), 'download')
+        #     file_name = f'data_{i}.csv'
+        #     os.rename(os.path.join(download_folder, 'data.csv'), os.path.join(download_folder, file_name))
+        
+        # driver.quit()
+        
+        # Now parsing newly downloaded csv files
+    
     def run(self):
         worldwide_gold_price_usd = self.get_price_vn_investing(
             url="https://vn.investing.com/currencies/xau-usd",
@@ -441,7 +562,8 @@ if __name__ == '__main__':
     # print(comodity_index.get_price_gold_vn())
     # print(comodity_index.get_price_steel_vn())
     # print(comodity_index.get_price_wall_tile_vn())
-    print(comodity_index.get_price_electricity_vn())
+    # print(comodity_index.get_price_electricity_vn())
+    comodity_index.get_metal_price_shfe()
     
     
     

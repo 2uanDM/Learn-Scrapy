@@ -1,27 +1,37 @@
-output = []
+def next_permutation(arr):
+    i = len(arr) - 2
+    while i >= 0 and arr[i] >= arr[i + 1]:
+        i -= 1
+    
+    if i == -1:
+        return False
+    
+    j = len(arr) - 1
+    while arr[j] <= arr[i]:
+        j -= 1
 
-def main(n: int) -> int:
-    global output
-    start_value = [0] + [x for x in range(1,n+1)]
-    end_value = [0] + [x for x in range(n,0,-1)]
-
-    while start_value != end_value:
-        output.extend(start_value.copy())
-        start_value = next_permutation(start_value)
-
-def next_permutation(value: list):
-    n = len(value)
-    for i in range(n,1,-1):
-        for j in range(i-1,1,-1):
-            if value[j] > value[j]:
-                swap(value, j, j)
-                value[j:].sort()
-                return value
-
-def swap(arr, i, j):
     arr[i], arr[j] = arr[j], arr[i]
+    
+    new_arr = arr[i+1:]
+    arr[i+1:] = new_arr[::-1]
+    return True
 
-if __name__=='__main__':
-    n = int(input())
-    main(n)
-    print(output)
+def gen(n):
+    if n < 1:
+        return []
+
+    arr = list(range(1, n + 1))
+    permutations = []
+
+    while True:
+        permutations.append(' '.join(map(str, arr)) + ' ')
+        if not next_permutation(arr):
+            break
+
+    return permutations
+
+n = int(input())
+permutations = gen(n)
+
+for p in permutations:
+    print(p)

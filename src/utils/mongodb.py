@@ -7,10 +7,12 @@ from pymongo.server_api import ServerApi
 
 import polars as pl
 import datetime
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class MongoDB():
-    uri = "mongodb+srv://kaxim_stock2023:dZ3WBFQsZ3f8rCyK@topic2.0d3b4gx.mongodb.net/?retryWrites=true&w=majority"
+    uri = os.getenv('MONGO_URI')
 
     def __init__(self) -> None:
         self.client = MongoClient(self.uri, server_api=ServerApi('1'))
@@ -58,5 +60,5 @@ class MongoDB():
 
 if __name__ == '__main__':
     mongo = MongoDB()
-    mongo.insert()
-    # mongo.query()
+    # mongo.insert()
+    mongo.query()
