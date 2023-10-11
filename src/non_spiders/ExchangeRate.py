@@ -11,6 +11,10 @@ import pandas as pd
 from src.utils.logger import logger
 from src.utils.crawler import run_crawler
 from src.non_spiders.Base import Base
+from src.utils.database.mongodb import MongoDB
+from src.utils.database.schema import SchemaTopic2
+
+from datetime import datetime
 
 class ExchangeRate(Base):
     def __init__(self) -> None:
@@ -173,14 +177,7 @@ class ExchangeRate(Base):
         data_VCB = response_VCB['data']
         data_NHNN = response_NHNN['data']
         
-        self.data_today += f'{self.date_slash} \
-            ,{response_dollar_index["data"]} \
-            ,{data_VCB["USD"]["sell"]} \
-            ,{self.__parse_float_for_NHNN(data_NHNN["USD"])} \
-            ,{data_VCB["EUR"]["sell"]} \
-            ,{self.__parse_float_for_NHNN(data_NHNN["EUR"])} \
-            ,{data_VCB["CNY"]["sell"]} \
-            ,{self.__parse_float_for_NHNN(data_NHNN["CNY"])}\n'
+        self.data_today += f'{self.date_slash},{response_dollar_index["data"]},{data_VCB["USD"]["sell"]},{self.__parse_float_for_NHNN(data_NHNN["USD"])},{data_VCB["EUR"]["sell"]},{self.__parse_float_for_NHNN(data_NHNN["EUR"])},{data_VCB["CNY"]["sell"]},{self.__parse_float_for_NHNN(data_NHNN["CNY"])}\n'
             
         # ---------====================Save the data====================---------
         try:
@@ -191,11 +188,37 @@ class ExchangeRate(Base):
                     f.write('Date,Dollar Index DXY, USD/VND - VCB (sell), USD/VND - NHNN (sell), EUR/VND - VCB (sell),  EUR/VND - NHNN (sell), CNY/VND - VCB (sell),  CNY/VND - NHNN (sell)\n')
             with open(exchange_rate_file, 'a', encoding='utf8') as f:
                 f.write(self.data_today)
+            print('Save exchange rate data to csv successfully')
         except Exception as e:
             message = 'An error occurs when saving the exchange rate data: ' +  str(e)
             print(message)
             logger(message)
-            return
+
+        # Push the data to mongodb
+        try:
+            mongodb = MongoDB('topic2')
+            db = mongodb.db
+            ty_gia_collection = db.ty_gia
+            
+            new_data = SchemaTopic2().ty_gia(
+                date=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
+                dollar_index_dxy=float(response_dollar_index['data']),
+                usd_vcb=data_VCB['USD']['sell'],
+                usd_nhnn=self.__parse_float_for_NHNN(data_NHNN['USD']),
+                eur_vcb=data_VCB['EUR']['sell'],
+                eur_nhnn=self.__parse_float_for_NHNN(data_NHNN['EUR']),
+                cny_vcb=data_VCB['CNY']['sell'],
+                cny_nhnn=self.__parse_float_for_NHNN(data_NHNN['CNY']),
+            )
+            
+            ty_gia_collection.insert_one(new_data)
+            
+            print('Insert new data to mongodb successfully')
+            
+        except Exception as e:
+            print('An error occurs when creating new data for mongodb: ' +  str(e))
+            return self.error_handler('An error occurs when creating new data for mongodb: ' +  str(e))
+            
     
     def __parse_float_for_NHNN(self, value: str):
         if value.find(',') != -1:

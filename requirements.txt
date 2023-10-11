@@ -95,3 +95,4 @@ xlwings==0.30.12
 zope.interface==6.0
 pymongo==4.5.0
 webdriver-manager==4.0.1
+pydantic

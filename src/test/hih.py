@@ -16,20 +16,21 @@ class MongoDB():
 
     def __init__(self) -> None:
         self.client = MongoClient(self.uri, server_api=ServerApi('1'))
+        self.db = self.client.topic2
     
     def insert(self) -> None:
-        db = self.client.topic2 # Database
-        ty_gia_collection = db.ty_gia # Collection
+        ty_gia_collection = self.db.ty_gia # Collection
         
         df = pl.read_csv(os.path.join(os.getcwd(), 'results', 'exchange_rate.csv'))
         
-        print(df)
+        # print(df)
         
         data_today = []
         
         for row in df.rows(named=True):
+            date = datetime.datetime.strptime(row['Date'].strip(), '%m/%d/%Y')
             new_data = {
-                'date': row['Date'],
+                'date': date,
                 'data': {
                     'dollar_index_dxy': row['Dollar Index DXY'],
                     'usd/vnd': {
@@ -52,13 +53,18 @@ class MongoDB():
         print(ty_gia_collection.insert_many(data_today))
 
     def query(self) -> None:
-        db = self.client.topic2
-        ty_gia_collection = db.ty_gia
+        ty_gia_collection = self.db.ty_gia
         
         print(ty_gia_collection.find_one({"date": "10/10/2023"}))
         print(ty_gia_collection.find_one({"date": "9/10/2023"}))
 
+# 
+
+class MongoSchema():
+    def __init__(self) -> None:
+        
+
 if __name__ == '__main__':
     mongo = MongoDB()
-    # mongo.insert()
-    mongo.query()
+    mongo.insert()
+    # mongo.query()

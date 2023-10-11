@@ -1,37 +1,24 @@
-def next_permutation(arr):
-    i = len(arr) - 2
-    while i >= 0 and arr[i] >= arr[i + 1]:
-        i -= 1
-    
-    if i == -1:
-        return False
-    
-    j = len(arr) - 1
-    while arr[j] <= arr[i]:
-        j -= 1
+import os
+import sys 
+sys.path.append(os.getcwd())
 
-    arr[i], arr[j] = arr[j], arr[i]
-    
-    new_arr = arr[i+1:]
-    arr[i+1:] = new_arr[::-1]
-    return True
+from src.utils.database.schema import SchemaTopic2
+from src.utils.database.mongodb import MongoDB
+from datetime import datetime
 
-def gen(n):
-    if n < 1:
-        return []
+ty_gia = SchemaTopic2().ty_gia(
+    date=datetime.strptime('10/10/2023', '%m/%d/%Y'),
+    dollar_index_dxy=1.1,
+    usd_vcb='a',
+    usd_nhnn=2.2,
+    eur_vcb=3.3,
+    eur_nhnn=4.4,
+    cny_vcb=6.6,
+    cny_nhnn=5.5,
+)
 
-    arr = list(range(1, n + 1))
-    permutations = []
+mongo = MongoDB('topic2')
 
-    while True:
-        permutations.append(' '.join(map(str, arr)) + ' ')
-        if not next_permutation(arr):
-            break
+db = mongo.get_db()
 
-    return permutations
-
-n = int(input())
-permutations = gen(n)
-
-for p in permutations:
-    print(p)
+db.ty_gia.insert_one(ty_gia)
