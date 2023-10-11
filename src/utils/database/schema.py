@@ -132,6 +132,7 @@ class SchemaTopic2():
                 'china_copper_price_cny': china_copper_price_cny,
                 'china_aluminium_price_cny': china_aluminium_price_cny,
                 'vn_steel_price_vnd': vn_steel_price_vnd,
+                'vn_ciment_price_vnd': '',
                 'wall_tiles_price_vnd': wall_tiles_price_vnd,
                 'dji': dji,
                 'ssec': ssec,
