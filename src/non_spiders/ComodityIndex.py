@@ -365,16 +365,16 @@ class ComodityIndex(Base):
             Get metal price from shfe website using selenium
         '''
         
-        # auth_proxy = {
-        #     'host' : '168.227.140.130',
-        #     'port' : 12345,
-        #     'username' : 'ebay2023',
-        #     'password' : 'proxyebaylam'
-        # }
+        auth_proxy = {
+            'host' : '168.227.140.130',
+            'port' : 12345,
+            'username' : 'ebay2023',
+            'password' : 'proxyebaylam'
+        }
         
-        # driver = ChromeDriver(headless=False, 
-        #                       authenticate_proxy=auth_proxy, 
-        #                       download_path=os.path.join(os.getcwd(), 'download')).driver
+        driver = ChromeDriver(headless=False, 
+                              authenticate_proxy=auth_proxy, 
+                              download_path=os.path.join(os.getcwd(), 'download')).driver
 
         def download_csv(url):
             driver.get(url)
@@ -452,118 +452,162 @@ class ComodityIndex(Base):
                     }
             except Exception as e:
                 return self.error_handler(f'Error when parsing csv file: {file_name} of shfe: {str(e)}')
-            
-        print(parse_csv(type=0))
         
-        # steel_url = 'https://www.shfe.com.cn/eng/market/futures/metal/rb/'
-        # copper_url = 'https://www.shfe.com.cn/eng/market/futures/metal/cu/'
-        # aluminum_url = 'https://www.shfe.com.cn/eng/market/futures/metal/al/' 
+        steel_url = 'https://www.shfe.com.cn/eng/market/futures/metal/rb/'
+        copper_url = 'https://www.shfe.com.cn/eng/market/futures/metal/cu/'
+        aluminum_url = 'https://www.shfe.com.cn/eng/market/futures/metal/al/' 
     
-        # shutil.rmtree(os.path.join(os.getcwd(), 'download'))
-        # os.makedirs(os.path.join(os.getcwd(), 'download'), exist_ok=True)
+        shutil.rmtree(os.path.join(os.getcwd(), 'download'))
+        os.makedirs(os.path.join(os.getcwd(), 'download'), exist_ok=True)
     
-        # for i, url in enumerate([steel_url, copper_url, aluminum_url]):
-        #     download_csv(url)
-        #     # Rename the latest downloaded file
-        #     download_folder = os.path.join(os.getcwd(), 'download')
-        #     file_name = f'data_{i}.csv'
-        #     os.rename(os.path.join(download_folder, 'data.csv'), os.path.join(download_folder, file_name))
+        for i, url in enumerate([steel_url, copper_url, aluminum_url]):
+            download_csv(url)
+            # Rename the latest downloaded file
+            download_folder = os.path.join(os.getcwd(), 'download')
+            file_name = f'data_{i}.csv'
+            os.rename(os.path.join(download_folder, 'data.csv'), os.path.join(download_folder, file_name))
         
-        # driver.quit()
+        driver.quit()
         
         # Now parsing newly downloaded csv files
+        try:
+            rb_price = parse_csv(type=0)
+            cu_price = parse_csv(type=1)
+            al_price = parse_csv(type=2)
+        except Exception as e:
+            return self.error_handler(f'Error when parsing csv files of shfe: {str(e)}')
+
+        if rb_price['status'] == 'error':
+            return self.error_handler(f'Error when parsing csv files of shfe: {rb_price["message"]}')
+        if cu_price['status'] == 'error':
+            return self.error_handler(f'Error when parsing csv files of shfe: {cu_price["message"]}')
+        if al_price['status'] == 'error':
+            return self.error_handler(f'Error when parsing csv files of shfe: {al_price["message"]}')
+        
+        return {
+            'status': 'success',
+            'message': 'Get metal price from shfe successfully',
+            'data': {
+                'steel': rb_price['data'],
+                'copper': cu_price['data'],
+                'aluminum': al_price['data']
+            }
+        }
+    
+    def get_result(self, func, args: tuple = None):
+        number_of_try = 0
+        
+        while number_of_try < 5:
+            try:
+                result = func(*args) if args else func()
+                if result.get('status') == 'error':
+                    number_of_try += 1
+                    print(f'Trying to get {func.__name__} result again since data is None: {number_of_try} time(s)')
+                    continue
+                else:
+                    return result
+            except Exception as e:
+                continue
+        
+        if number_of_try == 5:
+            return self.error_handler(f'Error when getting {func.__name__} results after 5 times:')
+        
+        if result.get('status') == 'error':
+            return self.error_handler(f'Error when getting {func.__name__} results: {result["message"]}')
+        
     
     def run(self):
-        worldwide_gold_price_usd = self.get_price_vn_investing(
-            url="https://vn.investing.com/currencies/xau-usd",
-            type=1
+        worldwide_gold_price_usd = self.get_result(
+            self.get_price_vn_investing,
+            ("https://vn.investing.com/currencies/xau-usd",1)
         )
         print('Gold', worldwide_gold_price_usd)
         
-        raw_oil_price_usd = self.get_price_vn_investing(
-            url="https://vn.investing.com/currencies/wti-usd",
-            type=1
-        )
-        print('Raw oil', raw_oil_price_usd)
+        # raw_oil_price_usd = self.get_price_vn_investing(
+        #     url="https://vn.investing.com/currencies/wti-usd",
+        #     type=1
+        # )
+        # print('Raw oil', raw_oil_price_usd)
         
-        steel_price_usd = self.get_price_vn_investing(
-            url="https://vn.investing.com/commodities/us-steel-coil-futures-streaming-chart",
-            type=2
-        )       
-        print('Steel', steel_price_usd)
+        # steel_price_usd = self.get_price_vn_investing(
+        #     url="https://vn.investing.com/commodities/us-steel-coil-futures-streaming-chart",
+        #     type=2
+        # )       
+        # print('Steel', steel_price_usd)
         
-        copper_price_usd = self.get_price_vn_investing(
-            url="https://vn.investing.com/commodities/copper",
-            type=3
-        )
+        # copper_price_usd = self.get_price_vn_investing(
+        #     url="https://vn.investing.com/commodities/copper",
+        #     type=3
+        # )
     
-        print('Copper', copper_price_usd)
+        # print('Copper', copper_price_usd)
         
-        aluminum_price_usd = self.get_price_vn_investing(
-            url="https://vn.investing.com/commodities/aluminum",
-            type=3
-        )
-        print('Aluminium', aluminum_price_usd)
+        # aluminum_price_usd = self.get_price_vn_investing(
+        #     url="https://vn.investing.com/commodities/aluminum",
+        #     type=3
+        # )
+        # print('Aluminium', aluminum_price_usd)
         
-        brent_oil_price_usd = self.get_price_vn_investing(
-            url="https://vn.investing.com/commodities/brent-oil-historical-data",
-            type=3
-        )
-        print('Brent oil', brent_oil_price_usd)
+        # brent_oil_price_usd = self.get_price_vn_investing(
+        #     url="https://vn.investing.com/commodities/brent-oil-historical-data",
+        #     type=3
+        # )
+        # print('Brent oil', brent_oil_price_usd)
         
-        dji_price_usd = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/us-30-historical-data',
-            type = 3
-        )
-        print('DJI', dji_price_usd)
+        # dji_price_usd = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/us-30-historical-data',
+        #     type = 3
+        # )
+        # print('DJI', dji_price_usd)
         
-        ssec_price_cny = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/shanghai-composite-historical-data',
-            type = 3
-        )
-        print('SSEC', ssec_price_cny)
+        # ssec_price_cny = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/shanghai-composite-historical-data',
+        #     type = 3
+        # )
+        # print('SSEC', ssec_price_cny)
         
-        nikkei_price_jpy = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/japan-ni225',
-            type = 3
-        )
-        print('Nikkei', nikkei_price_jpy)
+        # nikkei_price_jpy = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/japan-ni225',
+        #     type = 3
+        # )
+        # print('Nikkei', nikkei_price_jpy)
         
-        kospi_price_krw = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/kospi',
-            type = 3
-        )
-        print('KOSPI', kospi_price_krw)
+        # kospi_price_krw = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/kospi',
+        #     type = 3
+        # )
+        # print('KOSPI', kospi_price_krw)
         
-        dax_price_eur = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/germany-30',
-            type = 3
-        )
-        print('DAX', dax_price_eur)
+        # dax_price_eur = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/germany-30',
+        #     type = 3
+        # )
+        # print('DAX', dax_price_eur)
         
-        cac_40_price_eur = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/france-40-historical-data',
-            type = 3
-        )
-        print('CAC 40', cac_40_price_eur)
+        # cac_40_price_eur = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/france-40-historical-data',
+        #     type = 3
+        # )
+        # print('CAC 40', cac_40_price_eur)
         
-        ftse_100_price_gbp = self.get_price_vn_investing(
-            url = 'https://vn.investing.com/indices/uk-100-historical-data',
-            type = 3
-        )
-        print('FTSE 100', ftse_100_price_gbp)
+        # ftse_100_price_gbp = self.get_price_vn_investing(
+        #     url = 'https://vn.investing.com/indices/uk-100-historical-data',
+        #     type = 3
+        # )
+        # print('FTSE 100', ftse_100_price_gbp)
 
 
 if __name__ == '__main__':
     comodity_index = ComodityIndex()
     
-    # comodity_index.run()
-    # print(comodity_index.get_price_gasoline_vn())
+    comodity_index.run()
+    
+    print(comodity_index.get_price_gasoline_vn())
     # print(comodity_index.get_price_gold_vn())
     # print(comodity_index.get_price_steel_vn())
     # print(comodity_index.get_price_wall_tile_vn())
     # print(comodity_index.get_price_electricity_vn())
-    comodity_index.get_metal_price_shfe()
+    # print(comodity_index.get_metal_price_shfe())
     
     
     

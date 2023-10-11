@@ -33,7 +33,3 @@ class MongoDB():
         else:
             raise ValueError('Data must be a list or a dict')
 
-if __name__ == '__main__':
-    mongo = MongoDB()
-    mongo.insert()
-    # mongo.query()
