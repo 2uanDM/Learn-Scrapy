@@ -10,9 +10,7 @@ import pandas as pd
 
 from src.non_spiders.Base import Base
 
-from src.utils.logger import logger
 from src.utils.crawler import run_crawler
-from src.utils.database.mongodb import MongoDB
 from src.utils.database.schema import SchemaTopic2
 from src.utils.io import write_csv
 
@@ -209,11 +207,10 @@ class ExchangeRate(Base):
 
         # Push the data to mongodb
         try:
-            mongodb = MongoDB('topic2')
-            db = mongodb.db
-            ty_gia_collection = db.ty_gia
-            ty_gia_collection.insert_one(new_data)
-            
+            self.db.update_collection(
+                collection_name='ty_gia',
+                data=new_data
+            )
             print('Insert new data to mongodb successfully')
             
         except Exception as e:

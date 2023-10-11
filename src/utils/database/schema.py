@@ -43,8 +43,7 @@ class SchemaTopic2():
             }
         }
     
-    def chi_so_hang_hoa(self,
-                        date,
+    def chi_so_hang_hoa(self, date,
                         worldwide_gold_price_usd,
                         vn_gold_price_vnd,
                         ron95_price_vnd,
@@ -57,6 +56,7 @@ class SchemaTopic2():
                         worldwide_aluminium_price_usd,
                         china_steel_price_cny,
                         china_copper_price_cny,
+                        china_aluminium_price_cny,
                         vn_steel_price_vnd,
                         wall_tiles_price_vnd,
                         dji,
@@ -94,6 +94,8 @@ class SchemaTopic2():
             raise ValueError('china_steel_price_cny must be a float')
         if not isinstance(china_copper_price_cny, float):
             raise ValueError('china_copper_price_cny must be a float')
+        if not isinstance(china_aluminium_price_cny, float):
+            raise ValueError('china_aluminium_price_cny must be a float')
         if not isinstance(vn_steel_price_vnd, float):
             raise ValueError('vn_steel_price_vnd must be a float')
         if not isinstance(wall_tiles_price_vnd, float):
@@ -128,6 +130,7 @@ class SchemaTopic2():
                 'worldwide_aluminium_price_usd': worldwide_aluminium_price_usd,
                 'china_steel_price_cny': china_steel_price_cny,
                 'china_copper_price_cny': china_copper_price_cny,
+                'china_aluminium_price_cny': china_aluminium_price_cny,
                 'vn_steel_price_vnd': vn_steel_price_vnd,
                 'wall_tiles_price_vnd': wall_tiles_price_vnd,
                 'dji': dji,

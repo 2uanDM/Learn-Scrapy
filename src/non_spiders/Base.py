@@ -7,12 +7,14 @@ import requests
 from src.utils.logger import logger
 from bs4 import BeautifulSoup as bs
 from datetime import datetime
+from src.utils.database.mongodb import MongoDB
 
 class Base():
     def __init__(self) -> None:
         self.date_slash = datetime.now().strftime('%m/%d/%Y')
         self.date_dash = datetime.now().strftime('%Y-%m-%d')
         self.data_today = ''
+        self.db = MongoDB('topic2')
     
     def error_handler(self, message: str) -> dict:
         """
@@ -142,7 +144,7 @@ class Base():
         return {
             'status': 'success',
             'message': 'Get price from vn investing successfully',
-            'data': price
+            'data': float(price.replace(',', ''))
         }
     
     def __handle_special_case_type_3(self, html_str: str):
