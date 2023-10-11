@@ -23,12 +23,12 @@ def write_csv(file_name: str, data, mode: str = 'a') -> None:
     
     if isinstance(data, dict):
         # Flatten dict and write to csv file
-        with open(file_name, mode, newline='') as f:
+        with open(file_name, mode, newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             writer.writerow(flatten_dict(data))
     elif isinstance(data, list):
         # Flatten dict and write to csv file
-        with open(file_name, mode, newline='') as f:
+        with open(file_name, mode, newline='', encoding='utf-8') as f:
             writer = csv.writer(f)
             for d in data:
                 writer.writerow(flatten_dict(d))

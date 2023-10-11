@@ -220,7 +220,7 @@ class SchemaTopic2():
 
     def lai_suat_cafef(self, date, 
                        abbank, acb, bacabank, bidv, bvbank, viettinbank, eximbank, hdbank, kienlongbank, lienvietpostbank,
-                       mbbank, msb, namabank, ncb, ocb, pgbank, saigonbank, shb, seabank, techcombank, tpbank, vietabank,
+                       mbbank, msb, namabank, ncb, ocb, pgbank, saigonbank, shb, seabank, sacombank, techcombank, tpbank, vietabank,
                        vietbank, vietcombank, vib, vpbank, agribank) -> dict:
 
         # Ensure that the params are valid (all float)
@@ -251,7 +251,7 @@ class SchemaTopic2():
             raise ValueError('mbbank must be a float')
         if not isinstance(msb, float):
             raise ValueError('msb must be a float')
-        if not isinstance(namabank, float):
+        if (not isinstance(namabank, float)) and namabank is not None:
             raise ValueError('namabank must be a float')
         if not isinstance(ncb, float):
             raise ValueError('ncb must be a float')
@@ -267,7 +267,7 @@ class SchemaTopic2():
             raise ValueError('seabank must be a float')
         if not isinstance(techcombank, float):
             raise ValueError('techcombank must be a float')
-        if not isinstance(tpbank, float):
+        if (not isinstance(tpbank, float)) and tpbank is not None:
             raise ValueError('tpbank must be a float')
         if not isinstance(vietabank, float):
             raise ValueError('vietabank must be a float')
@@ -281,6 +281,8 @@ class SchemaTopic2():
             raise ValueError('vpbank must be a float')
         if not isinstance(agribank, float):
             raise ValueError('agribank must be a float')
+        if not isinstance(sacombank, float):
+            raise ValueError('sacombank must be a float')
         
         data = {
             'date' : date,
@@ -304,6 +306,7 @@ class SchemaTopic2():
                 'saigonbank': saigonbank,
                 'shb': shb,
                 'seabank': seabank,
+                'sacombank': sacombank,
                 'techcombank': techcombank,
                 'tpbank': tpbank,
                 'vietabank': vietabank,

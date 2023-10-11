@@ -9,7 +9,7 @@ from src.utils.database.schema import SchemaTopic2
 from src.utils.io import write_csv
 from datetime import datetime
 
-class LS_LNH(Base):
+class LsLnh(Base):
     temp_res_dir = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results')
     output_file_path = os.path.join(os.getcwd(), 'results', 'lai_suat_lien_ngan_hang.csv')
     
@@ -89,5 +89,5 @@ class LS_LNH(Base):
             return self.error_handler('An error occurs when updating data to database: ' + str(e))
         
 if __name__ == '__main__':
-    ls_lnh = LS_LNH()
+    ls_lnh = LsLnh()
     ls_lnh.run()
