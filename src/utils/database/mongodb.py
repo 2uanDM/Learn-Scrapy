@@ -26,9 +26,9 @@ class MongoDB():
     
     def update_collection(self, collection_name: str, data) -> None:
         collection = self.db[collection_name]
-        if data.isinstance(data, list):
+        if isinstance(data, list):
             collection.insert_many(data)
-        elif data.isinstance(data, dict):
+        elif isinstance(data, dict):
             collection.insert_one(data)
         else:
             raise ValueError('Data must be a list or a dict')

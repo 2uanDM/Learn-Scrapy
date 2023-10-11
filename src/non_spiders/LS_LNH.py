@@ -3,11 +3,11 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
-import subprocess
-
-from src.utils.logger import logger
 from src.utils.crawler import run_crawler
 from src.non_spiders.Base import Base
+from src.utils.database.schema import SchemaTopic2
+from src.utils.io import write_csv
+from datetime import datetime
 
 class LS_LNH(Base):
     temp_res_dir = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
@@ -26,6 +26,11 @@ class LS_LNH(Base):
         )
     
     def run(self):
+        # ----------------- Crawl data -----------------
+        self.crawl()
+        
+        
+        # ----------------- Read data from jsonl file -----------------
         if not os.path.exists(os.path.join(self.temp_res_dir, 'ls_lnh.jsonl')):
             print('Cannot find ls_lnh.jsonl file')
             return self.error_handler('Cannot find ls_lnh.jsonl file')
@@ -42,30 +47,47 @@ class LS_LNH(Base):
             return self.error_handler('Cannot get ls_lnh data:' + response['message'])
         
         print('-'*100)
+        
+        new_data = SchemaTopic2().lai_suat_lnh(
+            date=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
+            ls_quadem=response['data']['lai_suat']['Qua đêm'],
+            ls_1tuan=response['data']['lai_suat']['1 Tuần'],
+            ls_2tuan=response['data']['lai_suat']['2 Tuần'],
+            ls_1thang=response['data']['lai_suat']['1 Tháng'],
+            ls_3thang=response['data']['lai_suat']['3 Tháng'],
+            ls_6thang=response['data']['lai_suat']['6 Tháng'],
+            ls_9thang=response['data']['lai_suat']['9 Tháng'],
+            ls_12thang=response['data']['lai_suat'].get('12 Tháng', None),
+            ds_quadem=response['data']['doanh_so']['Qua đêm'],
+            ds_1tuan=response['data']['doanh_so']['1 Tuần'],
+            ds_2tuan=response['data']['doanh_so']['2 Tuần'],
+            ds_1thang=response['data']['doanh_so']['1 Tháng'],
+            ds_3thang=response['data']['doanh_so']['3 Tháng'],
+            ds_6thang=response['data']['doanh_so']['6 Tháng'],
+            ds_9thang=response['data']['doanh_so']['9 Tháng'],
+            ds_12thang=response['data']['doanh_so'].get('12 Tháng', None)
+        )
+        
+        # ----------------- Write data to csv -----------------
         print('Exporting data... to csv')
-        # TODO: pushing to mongodb
-        
-        data_today = f'{self.date_slash}'
-        
-        for x in response['data']['lai_suat']:
-            data_today += f',{response["data"]["lai_suat"][x]}'
-        
-        data_today += ','
-        
-        for x in response['data']['doanh_so']:
-            data_today += f',{response["data"]["doanh_so"][x]}'
-        
-        data_today += '\n'
-        
         try:
-            with open(self.output_file_path, 'a', encoding='utf8') as f:
-                f.write(data_today)
-            print('Export data to csv successfully')
+            data_write_csv = new_data.copy()
+            data_write_csv['date'] = self.date_dash
+            write_csv(file_name=self.output_file_path, data=data_write_csv)
+            print('Write data to csv successfully')
         except Exception as e:
-            print('An error occurs when extracting data to csv: ' + str(e))
-            return self.error_handler('An error occurs when extracting data to csv: ' + str(e))
+            print('An error occurs when writing data to csv: ' + str(e))
+            return self.error_handler('An error occurs when writing data to csv: ' + str(e))
+
+        # ----------------- Update data to database -----------------
+        print('Updating data to database...')
+        try:
+            self.db.update_collection('lai_suat_lien_ngan_hang', new_data)
+            print('Update data to database successfully')
+        except Exception as e:
+            print('An error occurs when updating data to database: ' + str(e))
+            return self.error_handler('An error occurs when updating data to database: ' + str(e))
         
 if __name__ == '__main__':
     ls_lnh = LS_LNH()
-    ls_lnh.crawl()
     ls_lnh.run()

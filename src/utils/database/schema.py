@@ -146,4 +146,74 @@ class SchemaTopic2():
         
         return data
         
+    def lai_suat_lnh(self, date, ls_quadem, ls_1tuan, ls_2tuan, ls_1thang, ls_3thang, ls_6thang, ls_9thang, ls_12thang,
+                     ds_quadem, ds_1tuan, ds_2tuan, ds_1thang, ds_3thang, ds_6thang, ds_9thang, ds_12thang) -> dict: 
         
+        # Ensure that the params are valid (all float)
+        if not isinstance(date, datetime):
+            raise ValueError('date must be a datetime object')
+        if not isinstance(ls_quadem, float):
+            raise ValueError('ls_quadem must be a float')
+        if not isinstance(ls_1tuan, float):
+            raise ValueError('ls_1tuan must be a float')
+        if not isinstance(ls_2tuan, float):
+            raise ValueError('ls_2tuan must be a float')
+        if not isinstance(ls_1thang, float):
+            raise ValueError('ls_1thang must be a float')
+        if not isinstance(ls_3thang, float):
+            raise ValueError('ls_3thang must be a float')
+        if not isinstance(ls_6thang, float):
+            raise ValueError('ls_6thang must be a float')
+        if not isinstance(ls_9thang, float):
+            raise ValueError('ls_9thang must be a float')
+        if (not isinstance(ls_12thang, float)) and (ls_12thang is not None):
+            raise ValueError('ls_12thang must be a float')
+        
+        # ----------------------------------------------------------------------    
+
+        if not isinstance(ds_quadem, float):
+            raise ValueError('ds_quadem must be a float')
+        if not isinstance(ds_1tuan, float):
+            raise ValueError('ds_1tuan must be a float')
+        if not isinstance(ds_2tuan, float):
+            raise ValueError('ds_2tuan must be a float')
+        if not isinstance(ds_1thang, float):
+            raise ValueError('ds_1thang must be a float')
+        if not isinstance(ds_3thang, float):
+            raise ValueError('ds_3thang must be a float')
+        if not isinstance(ds_6thang, float):
+            raise ValueError('ds_6thang must be a float')
+        if not isinstance(ds_9thang, float):
+            raise ValueError('ds_9thang must be a float')
+        if (not isinstance(ds_12thang, float)) and (ds_12thang is not None):
+            raise ValueError('ds_12thang must be a float')
+        
+        # Create the schema
+        
+        data = {
+            'date': date,
+            'data' : {
+                'lai_suat': {
+                    'quadem': ls_quadem,
+                    '1tuan': ls_1tuan,
+                    '2tuan': ls_2tuan,
+                    '1thang': ls_1thang,
+                    '3thang': ls_3thang,
+                    '6thang': ls_6thang,
+                    '9thang': ls_9thang,
+                    '12thang': ls_12thang
+                },
+                'doanh_so': {
+                    'quadem': ds_quadem,
+                    '1tuan': ds_1tuan,
+                    '2tuan': ds_2tuan,
+                    '1thang': ds_1thang,
+                    '3thang': ds_3thang,
+                    '6thang': ds_6thang,
+                    '9thang': ds_9thang,
+                    '12thang': ds_12thang
+                }
+            }
+        }
+        
+        return data

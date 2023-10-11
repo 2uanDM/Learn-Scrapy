@@ -62,7 +62,7 @@ class ComodityIndex(Base):
         while number_of_try < 5:
             try:
                 number_of_try += 1
-                print(f'Trying to get gasoline price in Vietnam: {number_of_try} time(s)')
+                print(f'Trying to get gasoline price in Vietnam from {url}: {number_of_try} time(s)')
                 response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
                 break
             except Exception as e:
@@ -334,7 +334,7 @@ class ComodityIndex(Base):
         while number_of_try < 5:
             try:
                 number_of_try += 1
-                print(f'Trying to get electricity price in Vietnam: {number_of_try} time(s)')
+                print(f'Trying to get electricity price in Vietnam from {url}: {number_of_try} time(s)')
                 response = requests.request("POST", url, headers=headers, data=payload, timeout=10)
                 break
             except Exception as e:
