@@ -10,7 +10,7 @@ from src.utils.io import write_csv
 from datetime import datetime
 
 class LS_LNH(Base):
-    temp_res_dir = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
+    temp_res_dir = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results')
     output_file_path = os.path.join(os.getcwd(), 'results', 'lai_suat_lien_ngan_hang.csv')
     
     def __init__(self) -> None:
@@ -22,7 +22,7 @@ class LS_LNH(Base):
             spider_name='NHNN_LS_LNH', 
             overwrite=True, 
             nolog=True, 
-            save_folder=os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
+            save_folder=os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results')
         )
     
     def run(self):
@@ -72,7 +72,7 @@ class LS_LNH(Base):
         print('Exporting data... to csv')
         try:
             data_write_csv = new_data.copy()
-            data_write_csv['date'] = self.date_dash
+            data_write_csv['date'] = self.date_slash
             write_csv(file_name=self.output_file_path, data=data_write_csv)
             print('Write data to csv successfully')
         except Exception as e:

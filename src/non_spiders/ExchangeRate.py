@@ -125,7 +125,7 @@ class ExchangeRate(Base):
         
     def get_exchange_rate_NHNN(self):
         print('Getting exchange rate from NHNN website...')
-        save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results', 'NHNN')
+        save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results')
         run_crawler(spider_name='NHNN_ExchangeRate', nolog=True, filename='exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
         
         try:

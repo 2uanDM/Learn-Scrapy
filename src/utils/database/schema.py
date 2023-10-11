@@ -217,3 +217,108 @@ class SchemaTopic2():
         }
         
         return data
+
+    def lai_suat_cafef(self, date, 
+                       abbank, acb, bacabank, bidv, bvbank, viettinbank, eximbank, hdbank, kienlongbank, lienvietpostbank,
+                       mbbank, msb, namabank, ncb, ocb, pgbank, saigonbank, shb, seabank, techcombank, tpbank, vietabank,
+                       vietbank, vietcombank, vib, vpbank, agribank) -> dict:
+
+        # Ensure that the params are valid (all float)
+        
+        if not isinstance(date, datetime):
+            raise ValueError('date must be a datetime object')
+        if not isinstance(abbank, float):
+            raise ValueError('abbank must be a float')
+        if not isinstance(acb, float):
+            raise ValueError('acb must be a float')
+        if not isinstance(bacabank, float):
+            raise ValueError('bacabank must be a float')
+        if not isinstance(bidv, float):
+            raise ValueError('bidv must be a float')
+        if not isinstance(bvbank, float):
+            raise ValueError('bvbank must be a float')
+        if not isinstance(viettinbank, float):
+            raise ValueError('viettinbank must be a float')
+        if not isinstance(eximbank, float):
+            raise ValueError('eximbank must be a float')
+        if not isinstance(hdbank, float):
+            raise ValueError('hdbank must be a float')
+        if not isinstance(kienlongbank, float):
+            raise ValueError('kienlongbank must be a float')
+        if not isinstance(lienvietpostbank, float):
+            raise ValueError('lienvietpostbank must be a float')
+        if not isinstance(mbbank, float):
+            raise ValueError('mbbank must be a float')
+        if not isinstance(msb, float):
+            raise ValueError('msb must be a float')
+        if not isinstance(namabank, float):
+            raise ValueError('namabank must be a float')
+        if not isinstance(ncb, float):
+            raise ValueError('ncb must be a float')
+        if not isinstance(ocb, float):
+            raise ValueError('ocb must be a float')
+        if not isinstance(pgbank, float):
+            raise ValueError('pgbank must be a float')
+        if not isinstance(saigonbank, float):
+            raise ValueError('saigonbank must be a float')
+        if not isinstance(shb, float):
+            raise ValueError('shb must be a float')
+        if not isinstance(seabank, float):
+            raise ValueError('seabank must be a float')
+        if not isinstance(techcombank, float):
+            raise ValueError('techcombank must be a float')
+        if not isinstance(tpbank, float):
+            raise ValueError('tpbank must be a float')
+        if not isinstance(vietabank, float):
+            raise ValueError('vietabank must be a float')
+        if not isinstance(vietbank, float):
+            raise ValueError('vietbank must be a float')
+        if not isinstance(vietcombank, float):
+            raise ValueError('vietcombank must be a float')
+        if not isinstance(vib, float):
+            raise ValueError('vib must be a float')
+        if not isinstance(vpbank, float):
+            raise ValueError('vpbank must be a float')
+        if not isinstance(agribank, float):
+            raise ValueError('agribank must be a float')
+        
+        data = {
+            'date' : date,
+            'data' : {
+                'abbank': abbank,
+                'acb': acb,
+                'bacabank': bacabank,
+                'bidv': bidv,
+                'bvbank': bvbank,
+                'viettinbank': viettinbank,
+                'eximbank': eximbank,
+                'hdbank': hdbank,
+                'kienlongbank': kienlongbank,
+                'lienvietpostbank': lienvietpostbank,
+                'mbbank': mbbank,
+                'msb': msb,
+                'namabank': namabank,
+                'ncb': ncb,
+                'ocb': ocb,
+                'pgbank': pgbank,
+                'saigonbank': saigonbank,
+                'shb': shb,
+                'seabank': seabank,
+                'techcombank': techcombank,
+                'tpbank': tpbank,
+                'vietabank': vietabank,
+                'vietbank': vietbank,
+                'vietcombank': vietcombank,
+                'vib': vib,
+                'vpbank': vpbank,
+                'agribank': agribank
+            }
+        }
+        
+        return data 
+    
+    def new_func(self):
+        pass
+        
+        
+        
