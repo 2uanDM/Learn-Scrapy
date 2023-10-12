@@ -19,7 +19,7 @@ from selenium.webdriver.common.by import By
 
 class Base():
     
-    config_path = os.path.join(os.getcwd(), 'config.json')
+    vietstock_config_path = os.path.join(os.getcwd(), 'config', 'vietstock.json')
     
     def __init__(self) -> None:
         self.date_slash = datetime.now().strftime('%m/%d/%Y')
@@ -212,7 +212,7 @@ class Base():
 
         self.driver.quit()
         
-        with open(self.config_path, 'w', encoding='utf8') as f:
+        with open(self.vietstock_config_path, 'w', encoding='utf8') as f:
             f.write(json.dumps({'cookie': cookie_str, 'token': token}, indent=4, ensure_ascii=False))
         
         print('Generate new cookie and csrf token of finance.vietstock.vn successfully')

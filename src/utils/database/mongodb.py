@@ -34,11 +34,11 @@ class MongoDB():
         else:
             raise ValueError('Data must be a list or a dict')
 
-if __name__=='__main__':
-    cluster = MongoDB(
-        cluster='topic2'
-    )
+# if __name__=='__main__':
+#     cluster = MongoDB(
+#         cluster='topic2'
+#     )
     
-    db = cluster.get_db()
-    db.tin_dung.create_index([('month', pymongo.ASCENDING), ('year', pymongo.ASCENDING)], unique=True)
+#     db = cluster.get_db()
+#     db.tin_dung.create_index([('month', pymongo.ASCENDING), ('year', pymongo.ASCENDING)], unique=True)
     

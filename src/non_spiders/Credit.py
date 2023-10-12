@@ -42,7 +42,7 @@ class Credit(Base):
         to_month = kwargs.get('to_month', 12)
         
         try:
-            with open(self.config_path, 'r', encoding='utf8') as f:
+            with open(self.vietstock_config_path, 'r', encoding='utf8') as f:
                 config = json.load(f)
                 token = config.get('token')
                 cookie = config.get('cookie')
@@ -183,6 +183,7 @@ class Credit(Base):
                 action = self.db.update_collection(collection_name='tin_dung', data=data)
                 print('Insert new data to mongodb successfully: ', action)
             except DuplicateKeyError:
+                print(f'Data for month {month} and year {year} already existed')
                 continue
         
         return {
@@ -193,5 +194,4 @@ class Credit(Base):
 
 if __name__ == '__main__':
     credit = Credit()
-        
-    credit.crawl(from_year=2019, headless=True)
+    credit.crawl(headless=True)
