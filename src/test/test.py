@@ -1,19 +1,17 @@
-import tabula
-import sys
-import os
+import re
+import datetime
 
-sys.path.append(os.getcwd())
+# Input date string
+date_str = "/Date(1696957200000)/"
 
-# Add path to environment variable
-path = os.path.join(os.getcwd(), 'jre', 'bin')
-os.environ['JAVA_HOME'] = path
+# Extract the timestamp from the string using regular expressions
+match = re.search(r'\d+', date_str)
 
-# Read the PDF file
-file_path = 'sacom.pdf'
+if match:
+    timestamp = int(match.group())  # Convert the matched digits to an integer
+    # Convert the timestamp to a datetime object
+    normal_date = datetime.datetime.fromtimestamp(timestamp / 1000)  # Divide by 1000 to convert from milliseconds to seconds
+    print(normal_date)
+else:
+    print("Invalid date format")
 
-pdfData = tabula.read_pdf(file_path, pages=1)
-
-# Extract the data to csv
-tabula.convert_into(file_path, "sacom.csv", output_format="csv", pages=1)
-
-# print(pdfData)
