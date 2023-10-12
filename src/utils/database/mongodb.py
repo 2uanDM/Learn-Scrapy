@@ -2,6 +2,7 @@ import os
 import sys
 sys.path.append(os.getcwd())
 
+import pymongo
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 from pydantic import BaseModel, Field
@@ -24,12 +25,20 @@ class MongoDB():
     def get_db(self):
         return self.db
     
-    def update_collection(self, collection_name: str, data) -> None:
+    def update_collection(self, collection_name: str, data):
         collection = self.db[collection_name]
         if isinstance(data, list):
-            collection.insert_many(data)
+            return collection.insert_many(data)
         elif isinstance(data, dict):
-            collection.insert_one(data)
+            return collection.insert_one(data)
         else:
             raise ValueError('Data must be a list or a dict')
 
+if __name__=='__main__':
+    cluster = MongoDB(
+        cluster='topic2'
+    )
+    
+    db = cluster.get_db()
+    db.tin_dung.create_index([('month', pymongo.ASCENDING), ('year', pymongo.ASCENDING)], unique=True)
+    

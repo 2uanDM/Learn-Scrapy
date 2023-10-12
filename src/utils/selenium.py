@@ -92,6 +92,7 @@ class ChromeDriver():
         
         chrome_options = Options()
         chrome_options.add_argument("--window-size=1920,1080")
+        chrome_options.add_argument("--log-level=3")
         
         if self.headless:
             chrome_options.add_argument("--headless")
@@ -118,3 +119,6 @@ class ChromeDriver():
 
         # Get the driver
         self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
+        
+        # Set the timeout
+        self.driver.set_page_load_timeout(100)

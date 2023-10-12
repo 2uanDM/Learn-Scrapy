@@ -320,8 +320,35 @@ class SchemaTopic2():
         
         return data 
     
-    def new_func(self):
-        pass
+    def tin_dung(self, date_created, month, year, tin_dung, cung_tien_m2, tang_truong_tin_dung, tang_truong_cung_tien_m2) -> dict:
+        # Ensure that the params are valid (all float)
+        if not isinstance(date_created, datetime):
+            raise ValueError('date_created must be a datetime object')
+        if ((not isinstance(month, int)) or (month < 1) or (month > 12)) and (month is not None):
+            raise ValueError('month must be an integer from 1 to 12')
+        if (not isinstance(year, int)) and (year is not None):
+            raise ValueError('year must be an integer')
+        if (not isinstance(tin_dung, float)) and (tin_dung is not None):
+            raise ValueError('tin_dung must be a float')
+        if (not isinstance(cung_tien_m2, float)) and (cung_tien_m2 is not None):
+            raise ValueError('cung_tien_m2 must be a float')
+        if (not isinstance(tang_truong_tin_dung, float)) and (tang_truong_tin_dung is not None):
+            raise ValueError('tang_truong_tin_dung must be a float')
+        if (not isinstance(tang_truong_cung_tien_m2, float)) and (tang_truong_cung_tien_m2 is not None):
+            raise ValueError('tang_truong_cung_tien_m2 must be a float')
+
+        data = {
+            'date_created': date_created,
+            'month': month,
+            'year': year,
+            'data': {
+                'tin_dung' : tin_dung,
+                'cung_tien_m2': cung_tien_m2,
+                'tang_truong_tin_dung': tang_truong_tin_dung,
+                'tang_truong_cung_tien_m2': tang_truong_cung_tien_m2
+            }
+        }
         
+        return data
         
         
