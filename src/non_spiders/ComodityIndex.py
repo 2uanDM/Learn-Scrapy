@@ -286,7 +286,7 @@ class ComodityIndex(Base):
         '''
         url = "https://calc.evn.com.vn/TinhHoaDon/api/Calculate"
         
-        current_date: str = self.date_slash
+        current_date: str = datetime.now().strftime('%d/%m/%Y')
         last_moth_date: str = (datetime.strptime(current_date, '%d/%m/%Y') - timedelta(days=29)).strftime('%d/%m/%Y')
 
         payload = json.dumps({
@@ -352,6 +352,7 @@ class ComodityIndex(Base):
                 return self.error_handler('Cannot find electricity price. Check the timeframe in payload again!')
 
             list_prices: list = data['Data']['HDN_HDONCTIET']
+            
             # print(json.dumps(list_prices, indent=4))
             price_per_kwh_type_3: float = list_prices[-1]['DON_GIA']
 
