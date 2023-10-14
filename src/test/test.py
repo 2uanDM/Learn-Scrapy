@@ -1,17 +1,13 @@
-import re
-import datetime
+import os 
+import sys 
+sys.path.append(os.getcwd())
 
-# Input date string
-date_str = "/Date(1696957200000)/"
+from bs4 import BeautifulSoup as bs
 
-# Extract the timestamp from the string using regular expressions
-match = re.search(r'\d+', date_str)
+with open('hello.html', 'r', encoding='utf8') as f:
+    html_str = f.read()
 
-if match:
-    timestamp = int(match.group())  # Convert the matched digits to an integer
-    # Convert the timestamp to a datetime object
-    normal_date = datetime.datetime.fromtimestamp(timestamp / 1000)  # Divide by 1000 to convert from milliseconds to seconds
-    print(normal_date)
-else:
-    print("Invalid date format")
 
+
+print(data)
+    

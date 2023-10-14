@@ -29,7 +29,6 @@ manifest_json = """
 }
 """
 
-
 def get_background_js(host, port, user, password):
     background_js = """
     var config = {
