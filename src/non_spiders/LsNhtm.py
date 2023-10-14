@@ -27,24 +27,26 @@ class LsNhtm(Base):
             
             for row in rows:
                 cells = row.find_all('td')
-                rate_type = cells[0].text.strip()
+                ky_han = cells[0].text.strip()
                 rate = float(cells[1].text.replace('%', '').strip())
                 
-                if rate_type == 'Không kỳ hạn':
-                    rate_type = 'khong_ky_han'
+                if ky_han == 'Không kỳ hạn':
+                    ky_han = 'khong_ky_han'
                 else:
-                    rate_type = rate_type.replace(' tháng', '_thang')
+                    ky_han = ky_han.replace(' tháng', '_thang')
                 
-                if rate_type == '48_thang':
+                if ky_han == '48_thang':
                     break
+                
+                if ky_han == '12_thang':
+                    data[ky_han] = rate
+                    data['18_thang'] = None
                     
-                data[rate_type] = rate
+                data[ky_han] = rate
             
             del data['7 ngày']
             del data['14 ngày']
             del data['2_thang']
-
-            data['18_thang'] = None
             
             return {
                 'status': 'success',
@@ -113,6 +115,9 @@ class LsNhtm(Base):
         WebDriverWait(driver, 20).until(
             EC.presence_of_all_elements_located((By.TAG_NAME, 'table'))
         )
+        
+        time.sleep(2)
+        
         html_str = driver.page_source
         
         if type == 'vcb':
@@ -148,6 +153,7 @@ class LsNhtm(Base):
         mb_url = 'https://www.mbbank.com.vn/Fee'
         
         print(self.__crawl(driver, 'vcb', vcb_url))
+        time.sleep(1)
         print(self.__crawl(driver, 'mb', mb_url))
 
 if __name__=='__main__':
