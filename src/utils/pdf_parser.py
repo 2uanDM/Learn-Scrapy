@@ -8,6 +8,9 @@ sys.path.append(os.getcwd())
 path = os.path.join(os.getcwd(), 'jre', 'bin')
 os.environ['JAVA_HOME'] = path
 
+# Months to be extracted
+months = [1,3,6,9,12,18,24,36]
+
 def extract_tcb() -> dict:
     try:
         tcb_folder = os.path.join(os.getcwd(), 'download', 'tcb')
@@ -23,9 +26,8 @@ def extract_tcb() -> dict:
             pdfData = tabula.read_pdf(file_path, pages=1)
             df = pd.DataFrame(pdfData[0])
             df = df.iloc[4:40, [0, 2]]
-            
-            months = [1,3,6,9,12,18,24,36]
-            data = {}
+
+            data = {'khong_ky_han': None}
             
             for row in df.iterrows():
                 ky_han: int = int(row[1][0].strip().replace('M', ''))
@@ -47,7 +49,46 @@ def extract_tcb() -> dict:
             'message': message,
             'data': None
         }
+    
+def extract_stb():
+    try:
+        stb_folder = os.path.join(os.getcwd(), 'download', 'stb')
+        files = os.listdir(stb_folder)
+        
+        if 'stb.pdf' not in files:
+            raise Exception('File stb.pdf not found')
+        else:
+            file_path = os.path.join(stb_folder, 'stb.pdf')
+            pdfData = tabula.read_pdf(file_path, pages=1)
+            df = pd.DataFrame(pdfData[0])
+            
+            df = df.iloc[2:19, [0,1]]
+            data = {'khong_ky_han': None}
+            
+            for label, series in df.iterrows():
+                ky_han = series[0]
+                lai_suat = float(series[1].replace('%', ''))
+                
+                num_month = int(ky_han.split(' ')[0])
+                if num_month in months:
+                    data[f'{num_month}_thang'] = lai_suat
+                
+            return {
+                'status': 'success',
+                'message': 'Parse STB successfully',
+                'data': data
+            }   
+        
+    except Exception as e:
+        message = f'Error when parse LS NHTM STB: {str(e)}'
+        print(message)
+        return {
+            'status': 'error',
+            'message': message,
+            'data': None
+        }
 
 if __name__=='__main__':
     print(extract_tcb())
+    print(extract_stb())
     
