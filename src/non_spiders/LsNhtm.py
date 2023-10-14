@@ -1,4 +1,5 @@
-import os 
+import os
+import shutil 
 import sys
 import time
 sys.path.append(os.getcwd())
@@ -12,7 +13,6 @@ from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup as bs
 
 class LsNhtm(Base):
-    
     def __init__(self):
         super().__init__()
         
@@ -109,12 +109,45 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_tcb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            div_link = soup.find('div', {'class': 'PreviewPdf_buttonOpenDialog__jTAky previewPdfMode'})
+            link = div_link.find('a')['href']
+
+            # Check if the link is valid
+            if link.find('techcombank.com') == -1:
+                raise Exception('Link is not valid')
+        
+            # Download the pdf file to temp folder
+            down
+            shutil.rmtree(self.DOWNLOAD_FOLDER)
+            
+            
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM TCB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+        
+        
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
-        WebDriverWait(driver, 20).until(
-            EC.presence_of_all_elements_located((By.TAG_NAME, 'table'))
-        )
+        
+        parse_by_pdf = ['tcb']
+        parse_by_bs4 = ['vcb', 'mb']
+        
+        if type in parse_by_bs4:
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'table')) # Wait for the table to load
+            ) 
+        else:
+            # Wait for all elements loaded
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'a')) # Wait for the link to download pdf file
+            )
         
         time.sleep(2)
         
@@ -124,6 +157,10 @@ class LsNhtm(Base):
             return self.parse_vcb(html_str)
         elif type == 'mb':
             return self.parse_mb(html_str)
+        elif type == 'tcb':
+            return self.parse_tcb(html_str)
+
+        time.sleep(0.5)
 
     def crawl_selenium(self) -> dict:
         """
@@ -147,14 +184,15 @@ class LsNhtm(Base):
             ```
         """
         
-        driver = ChromeDriver(headless=True).driver
+        driver = ChromeDriver(headless=False).driver
         
         vcb_url = 'https://www.vietcombank.com.vn/vi-VN/KHCN/Cong-cu-Tien-ich/KHCN---Lai-suat'
         mb_url = 'https://www.mbbank.com.vn/Fee'
+        tcb_url = 'https://techcombank.com/cong-cu-tien-ich/bieu-phi-lai-suat'
         
         print(self.__crawl(driver, 'vcb', vcb_url))
-        time.sleep(1)
         print(self.__crawl(driver, 'mb', mb_url))
+        print(self.__crawl(driver, 'tcb', tcb_url))
 
 if __name__=='__main__':
     lsnhtm = LsNhtm()

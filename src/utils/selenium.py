@@ -95,7 +95,6 @@ class ChromeDriver():
         
         if self.headless:
             chrome_options.add_argument("--headless")
-            chrome_options.add_argument("--disable-gpu")
             
         if self.download_path is not None:
             prefs = {"download.default_directory": self.download_path}

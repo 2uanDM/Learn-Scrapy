@@ -376,15 +376,17 @@ class ComodityIndex(Base):
             'password' : 'proxyebaylam'
         }
         
+        download_folder = os.path.join(os.getcwd(), 'download', 'shfe')
+                
         if use_proxy:
             driver = ChromeDriver(headless=headless, 
                                 authenticate_proxy=auth_proxy, 
-                                download_path=os.path.join(os.getcwd(), 'download')).driver
+                                download_path=download_folder).driver
         else:
             driver = ChromeDriver(headless=headless,
-                                  download_path=os.path.join(os.getcwd(), 'download')).driver
+                                  download_path=download_folder).driver
 
-        def download_csv(url):
+        def download_csv(url, driver):
             driver.get(url)
 
             WebDriverWait(driver,20).until(EC.visibility_of_element_located((
@@ -429,7 +431,6 @@ class ComodityIndex(Base):
                 print(f'Invalid type: {type} when parsing the csv of shfe')
                 return self.error_handler(f'Invalid type: {type} when parsing the csv of shfe')
             
-            download_folder = os.path.join(os.getcwd(), 'download')
             file_names = os.listdir(download_folder)
             file_name = f'data_{type}.csv'
             
@@ -465,14 +466,12 @@ class ComodityIndex(Base):
         copper_url = 'https://www.shfe.com.cn/eng/market/futures/metal/cu/'
         aluminum_url = 'https://www.shfe.com.cn/eng/market/futures/metal/al/' 
     
-        shutil.rmtree(os.path.join(os.getcwd(), 'download'))
-        os.makedirs(os.path.join(os.getcwd(), 'download'), exist_ok=True)
+        shutil.rmtree(download_folder)
+        os.makedirs(download_folder, exist_ok=True)
     
         for i, url in enumerate([steel_url, copper_url, aluminum_url]):
             print(f'Accessing url: ', url)
-            download_csv(url)
-            # Rename the latest downloaded file
-            download_folder = os.path.join(os.getcwd(), 'download')
+            download_csv(url, driver)
             file_name = f'data_{i}.csv'
             os.rename(os.path.join(download_folder, 'data.csv'), os.path.join(download_folder, file_name))
         
@@ -822,7 +821,7 @@ class ComodityIndex(Base):
         
         metal_shfe = self.get_result(
             self.get_metal_price_shfe,
-            (False, False)
+            (True, False)
         )
         
         if metal_shfe['status'] == 'error':
