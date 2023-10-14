@@ -9,5 +9,4 @@ with open('hello.html', 'r', encoding='utf8') as f:
 
 
 
-print(data)
     

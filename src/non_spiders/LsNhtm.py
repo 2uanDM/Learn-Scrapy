@@ -2,11 +2,15 @@ import os
 import shutil 
 import sys
 import time
+
+import requests
 sys.path.append(os.getcwd())
 
 from src.non_spiders.Base import Base
 
 from src.utils.selenium import ChromeDriver
+from src.utils.pdf_parser import extract_tcb
+
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -111,6 +115,7 @@ class LsNhtm(Base):
     
     def parse_tcb(self, html_str: str):
         try:
+            # -----------------------Get the link to download pdf file-----------------------
             soup = bs(html_str, 'html.parser')
             div_link = soup.find('div', {'class': 'PreviewPdf_buttonOpenDialog__jTAky previewPdfMode'})
             link = div_link.find('a')['href']
@@ -119,11 +124,43 @@ class LsNhtm(Base):
             if link.find('techcombank.com') == -1:
                 raise Exception('Link is not valid')
         
-            # Download the pdf file to temp folder
-            down
-            shutil.rmtree(self.DOWNLOAD_FOLDER)
+            # -----------------------Download the pdf file to temp folder-----------------------
+            download_folder = os.path.join(os.getcwd(), 'download', 'tcb')
+            shutil.rmtree(download_folder)
+            os.makedirs(download_folder)
             
+            headers = {
+                'authority': 'techcombank.com',
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'accept-language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+                'cache-control': 'max-age=0',
+                'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'document',
+                'sec-fetch-mode': 'navigate',
+                'sec-fetch-site': 'same-origin',
+                'sec-fetch-user': '?1',
+                'upgrade-insecure-requests': '1',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            }           
             
+            response = requests.request("GET", link, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                raise Exception(f'Error when download pdf file from {link}')
+            
+            with open(os.path.join(download_folder, 'tcb.pdf'), 'wb') as f:
+                f.write(response.content)
+            
+            # -----------------------Parse the pdf file-----------------------
+            time.sleep(1)
+            result = extract_tcb()
+            
+            if result['status'] == 'error':
+                raise Exception(result['message'])
+            
+            return result
             
         except Exception as e:
             message = f'Error when parse LS NHTM TCB: {str(e)}'
@@ -190,9 +227,9 @@ class LsNhtm(Base):
         mb_url = 'https://www.mbbank.com.vn/Fee'
         tcb_url = 'https://techcombank.com/cong-cu-tien-ich/bieu-phi-lai-suat'
         
-        print(self.__crawl(driver, 'vcb', vcb_url))
-        print(self.__crawl(driver, 'mb', mb_url))
-        print(self.__crawl(driver, 'tcb', tcb_url))
+        # print(self.__crawl(driver, 'vcb', vcb_url))
+        # print(self.__crawl(driver, 'mb', mb_url))
+        # print(self.__crawl(driver, 'tcb', tcb_url))
 
 if __name__=='__main__':
     lsnhtm = LsNhtm()
