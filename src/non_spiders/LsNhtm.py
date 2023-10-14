@@ -220,6 +220,45 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)    
     
+    def parse_agribank(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('table') # Find the first table
+            tbody = table.find('tbody')
+            
+            rows = tbody.find_all('tr')
+            
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            # Khong ky han data 
+            khong_ky_han = float(rows[0].find_all('td')[1].text.strip().replace('%', ''))
+            data = {'khong_ky_han': khong_ky_han}
+            
+            # The rest data
+            rest_rows = rows[1:]
+            
+            for row in rest_rows[:-1]:
+                cells = row.find_all('td')
+                
+                num_month = int(cells[0].text.strip().split(' ')[0])
+                
+                if num_month in months:
+                    lai_suat = float(cells[1].text.strip().replace('%', ''))
+                    data[f'{num_month}_thang'] = lai_suat
+            
+            data['36_thang'] = None
+            
+            return {
+                'status': 'success',
+                'message': 'Parse Agribank successfully',
+                'data': data
+            }
+                
+        except Exception as e:
+            message = f'Error when parse LS NHTM Agribank: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
@@ -249,6 +288,9 @@ class LsNhtm(Base):
             return self.parse_tcb(html_str)
         elif type == 'stb':
             return self.parse_stb(html_str)
+        elif type == 'agribank':
+            return self.parse_agribank(html_str)
+
 
         time.sleep(0.5)
 
@@ -280,11 +322,13 @@ class LsNhtm(Base):
         mb_url = 'https://www.mbbank.com.vn/Fee'
         tcb_url = 'https://techcombank.com/cong-cu-tien-ich/bieu-phi-lai-suat'
         stb_url = 'https://www.sacombank.com.vn/cong-cu/lai-suat.html/cf/lai-suat/tien-gui.html'
+        agribank_url = 'https://www.agribank.com.vn/vn/lai-suat'
         
-        print(self.__crawl(driver, 'vcb', vcb_url))
-        print(self.__crawl(driver, 'mb', mb_url))
-        print(self.__crawl(driver, 'tcb', tcb_url))
-        print(self.__crawl(driver, 'stb', stb_url)) 
+        # print(self.__crawl(driver, 'vcb', vcb_url))
+        # print(self.__crawl(driver, 'mb', mb_url))
+        # print(self.__crawl(driver, 'tcb', tcb_url))
+        # print(self.__crawl(driver, 'stb', stb_url)) 
+        print(self.__crawl(driver, 'agribank', agribank_url))
 
 if __name__=='__main__':
     lsnhtm = LsNhtm()
