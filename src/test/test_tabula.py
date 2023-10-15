@@ -11,16 +11,15 @@ path = os.path.join(os.getcwd(), 'jre', 'bin')
 os.environ['JAVA_HOME'] = path
 
 # Read the PDF file
-file_path = 'https://www.shb.com.vn/wp-content/uploads/2023/02/01.Bieu-LS-H%C4%90-KHCN-VND-13.10.2023-final.pdf'
+file_path = r'C:\Users\Thinkbook 14 G3 ACL\Documents\GitHub\Kaxim-Stocks-Topic-2\download\vpb\vpb.pdf'
 
-pdfData = tabula.read_pdf(file_path, pages=1)
+pdfData = tabula.read_pdf(file_path, pages=2, multiple_tables=True, encoding='utf-8')
 
-df = pd.DataFrame(pdfData[0])
+df = pd.DataFrame(pdfData[1])
 
-# # Get columns 0 and 2
-# df = df.iloc[4:40, [0, 2]]
+df = df.iloc[[1,4,5], 2:19]
 
-# for row in df.iterrows():
-#     print(row[1][0], row[1][1])
+# Reset the index
+df.reset_index(drop=True, inplace=True)
 
 print(df)

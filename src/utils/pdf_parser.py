@@ -88,7 +88,47 @@ def extract_stb():
             'data': None
         }
 
+def extract_vpb():
+    try:
+        vpb_folder = os.path.join(os.getcwd(), 'download', 'vpb')
+        files = os.listdir(vpb_folder)
+        
+        if 'vpb.pdf' not in files:
+            raise Exception('File vpb.pdf not found')
+        else:
+            file_path = os.path.join(vpb_folder, 'vpb.pdf')
+            pdfData = tabula.read_pdf(file_path, pages=2, multiple_tables=True, encoding='utf-8')
+            df = pd.DataFrame(pdfData[1])
+            df = df.iloc[[1,4,5], 2:19]
+            df.reset_index(drop=True, inplace=True)
+            
+            # Set the header of the dataframe by the first row
+            df.columns = df.iloc[0]
+            
+            data = {'khong_ky_han': None}
+            for col in df.columns:
+                num_month = col.replace('T', '').strip()
+                
+                if int(num_month) in months:
+                    data[f'{num_month}_thang'] = float(df[col][1])
+            
+            return {
+                'status': 'success',
+                'message': 'Parse VPB successfully',
+                'data': data
+            }
+            
+    except Exception as e:
+        message = f'Error when parse LS NHTM VPB: {str(e)}'
+        print(message)
+        return {
+            'status': 'error',
+            'message': message,
+            'data': None
+        }
+
 if __name__=='__main__':
-    print(extract_tcb())
-    print(extract_stb())
+    # print(extract_tcb())
+    # print(extract_stb())
+    print(extract_vpb())
     

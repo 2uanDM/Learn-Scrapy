@@ -9,7 +9,7 @@ sys.path.append(os.getcwd())
 from src.non_spiders.Base import Base
 
 from src.utils.selenium import ChromeDriver
-from src.utils.pdf_parser import extract_tcb, extract_stb
+from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -448,12 +448,64 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_vpb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            
+            # Find the link to the pdf file
+            h3_tag = soup.find(lambda tag: tag.name == 'h3' and 'KHCN - Bảng lãi suất huy động' in tag.string)
+            a_tag= h3_tag.find_next('a')
+            href= a_tag['href']
+            full_url = f'https://www.vpbank.com.vn{href}'
+            
+            # ---------------Download the pdf file-----------------------
+            headers = {
+                'authority': 'www.vpbank.com.vn',
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'accept-language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+                'cache-control': 'max-age=0',
+                'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'document',
+                'sec-fetch-mode': 'navigate',
+                'sec-fetch-site': 'same-origin',
+                'sec-fetch-user': '?1',
+                'upgrade-insecure-requests': '1',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            }
+            
+            response = requests.request("GET", full_url, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                raise Exception(f'Error when download pdf file from {full_url}')
+            
+            download_folder = os.path.join(os.getcwd(), 'download', 'vpb')
+            shutil.rmtree(download_folder)
+            os.makedirs(download_folder, exist_ok=True)
+            
+            with open(os.path.join(download_folder, 'vpb.pdf'), 'wb') as f:
+                f.write(response.content)
+            
+            # -----------------------Parse the pdf file-----------------------
+            result = extract_vpb()
+            
+            if result['status'] == 'error':
+                raise Exception(result['message'])
+            else:
+                return result
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM VPB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
-        parse_by_pdf = ['tcb', 'stb']
-        parse_by_bs4 = ['vcb', 'mb','bid', 'agribank', 'ctg', 'tpb', 'acb']
+        parse_by_pdf = ['tcb', 'stb', 'vpb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -496,9 +548,11 @@ class LsNhtm(Base):
                 print('No button to accept cookie policy, continue')
                 html_str = driver.page_source
             return self.parse_acb(html_str)
+        elif type == 'vpb':
+            return self.parse_vpb(html_str)
 
-        time.sleep(0.5)
-
+        time.sleep(0.5) 
+    
     def crawl_selenium(self) -> dict:
         """
             This method used to crawl pages which required to use selenium
@@ -532,16 +586,19 @@ class LsNhtm(Base):
         ctg_url = 'https://www.vietinbank.vn/khaixuandonloc/lai-suat/'
         tpb_url = 'https://tpb.vn/cong-cu-tinh-toan/lai-suat'
         acb_url = 'https://www.acb.com.vn/lai-suat-tien-gui'
+        vpb_url = 'https://www.vpbank.com.vn/tai-lieu-bieu-mau#category_3'
         
-        print(self.__crawl(driver, 'vcb', vcb_url))
-        print(self.__crawl(driver, 'mb', mb_url))
-        print(self.__crawl(driver, 'tcb', tcb_url))
-        print(self.__crawl(driver, 'stb', stb_url)) 
-        print(self.__crawl(driver, 'agribank', agribank_url))
-        print(self.__crawl(driver, 'bid', bid_url))
-        print(self.__crawl(driver, 'ctg', ctg_url))
-        print(self.__crawl(driver, 'tpb', tpb_url))
-        print(self.__crawl(driver, 'acb', acb_url))
+        
+        # print(self.__crawl(driver, 'vcb', vcb_url))
+        # print(self.__crawl(driver, 'mb', mb_url))
+        # print(self.__crawl(driver, 'tcb', tcb_url))
+        # print(self.__crawl(driver, 'stb', stb_url)) 
+        # print(self.__crawl(driver, 'agribank', agribank_url))
+        # print(self.__crawl(driver, 'bid', bid_url))
+        # print(self.__crawl(driver, 'ctg', ctg_url))
+        # print(self.__crawl(driver, 'tpb', tpb_url))
+        # print(self.__crawl(driver, 'acb', acb_url))
+        print(self.__crawl(driver, 'vpb', vpb_url))
         
         driver.quit()
         
