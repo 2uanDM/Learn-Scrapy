@@ -407,12 +407,53 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_acb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find_all('div', {'class': 'cumulative_saving_tables table-responsive'})[2]
+            print('Found table')
+            tbody = table.find('tbody')
+            print('Found tbody')
+            
+            rows = tbody.find_all('tr')
+            print('Found rows')
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            data = {}
+            
+            # Khong ky han data
+            data['khong_ky_han'] = None
+            
+            # 1 thang data
+            mot_thang = float(rows[5].find_all('td')[2].text.strip().replace(',', '.'))
+            data['1_thang'] = mot_thang
+            
+            # The rest data
+            for row in rows[6:]:
+                cells = row.find_all('td')
+    
+                ky_han = cells[0].text.strip().replace('T','')
+    
+                if int(ky_han) in months:
+                    lai_suat = float(cells[1].text.strip().replace(',', '.'))
+                    data[f'{ky_han}_thang'] = lai_suat
+            
+            return {
+                'status': 'success',
+                'message': 'Parse ACB successfully',
+                'data': data
+            }
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM ACB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb']
-        parse_by_bs4 = ['vcb', 'mb','bid', 'agribank']
+        parse_by_bs4 = ['vcb', 'mb','bid', 'agribank', 'ctg', 'tpb', 'acb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -424,7 +465,7 @@ class LsNhtm(Base):
                 EC.presence_of_all_elements_located((By.TAG_NAME, 'a')) # Wait for the link to download pdf file
             )
         
-        time.sleep(2)
+        time.sleep(2.5)
         
         html_str = driver.page_source
         
@@ -444,7 +485,17 @@ class LsNhtm(Base):
             return self.parse_ctg(html_str)
         elif type == 'tpb':
             return self.parse_tpb(html_str)
-
+        elif type == 'acb':
+            try:
+                button = WebDriverWait(driver, 10).until(lambda x: x.find_element(By.ID, 'rcc-confirm-button'))
+                print('Found button to accept cookie policy')
+                button.click()
+                time.sleep(2)
+                html_str = driver.page_source
+            except Exception:
+                print('No button to accept cookie policy, continue')
+                html_str = driver.page_source
+            return self.parse_acb(html_str)
 
         time.sleep(0.5)
 
@@ -480,16 +531,17 @@ class LsNhtm(Base):
         bid_url = 'https://bidv.com.vn/vn/tra-cuu-lai-suat'
         ctg_url = 'https://www.vietinbank.vn/khaixuandonloc/lai-suat/'
         tpb_url = 'https://tpb.vn/cong-cu-tinh-toan/lai-suat'
+        acb_url = 'https://www.acb.com.vn/lai-suat-tien-gui'
         
-        # print(self.__crawl(driver, 'vcb', vcb_url))
-        # print(self.__crawl(driver, 'mb', mb_url))
-        # print(self.__crawl(driver, 'tcb', tcb_url))
-        # print(self.__crawl(driver, 'stb', stb_url)) 
-        # print(self.__crawl(driver, 'agribank', agribank_url))
-        # print(self.__crawl(driver, 'bid', bid_url))
-        # print(self.__crawl(driver, 'ctg', ctg_url))
-        # print(self.__crawl(driver, 'tpb', tpbank_url))
-        
+        print(self.__crawl(driver, 'vcb', vcb_url))
+        print(self.__crawl(driver, 'mb', mb_url))
+        print(self.__crawl(driver, 'tcb', tcb_url))
+        print(self.__crawl(driver, 'stb', stb_url)) 
+        print(self.__crawl(driver, 'agribank', agribank_url))
+        print(self.__crawl(driver, 'bid', bid_url))
+        print(self.__crawl(driver, 'ctg', ctg_url))
+        print(self.__crawl(driver, 'tpb', tpb_url))
+        print(self.__crawl(driver, 'acb', acb_url))
         
         driver.quit()
         
