@@ -500,12 +500,47 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_vib(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('div', {'class': 'bx-wrapper'})
+            col = table.find_all('div', {'class': 'vib-v2-box-slider-expression'})[1]
+            cells = col.find_all('div', {'class': 'vib-v2-line-box-table-expression'})
+            
+            if len(cells) != 15:
+                raise Exception('The structure of the page VIB has changed')
+            
+            data = {}
+            
+            # Khong ky han data
+            data['khong_ky_han'] = None
+            
+            data['1_thang'] = float(cells[0].text.strip().replace('%',''))
+            data['3_thang'] = float(cells[4].text.strip().replace('%',''))
+            data['6_thang'] = float(cells[1].text.strip().replace('%',''))
+            data['9_thang'] = float(cells[7].text.strip().replace('%',''))
+            data['12_thang'] = float(cells[10].text.strip().replace('%',''))
+            data['18_thang'] = float(cells[12].text.strip().replace('%',''))
+            data['24_thang'] = float(cells[13].text.strip().replace('%',''))
+            data['36_thang'] = float(cells[14].text.strip().replace('%',''))
+            
+            return {
+                'status': 'success',
+                'message': 'Parse VIB successfully',
+                'data': data
+            }
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM VIB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -550,6 +585,8 @@ class LsNhtm(Base):
             return self.parse_acb(html_str)
         elif type == 'vpb':
             return self.parse_vpb(html_str)
+        elif type == 'vib':
+            return self.parse_vib(html_str)
 
         time.sleep(0.5) 
     
@@ -587,6 +624,7 @@ class LsNhtm(Base):
         tpb_url = 'https://tpb.vn/cong-cu-tinh-toan/lai-suat'
         acb_url = 'https://www.acb.com.vn/lai-suat-tien-gui'
         vpb_url = 'https://www.vpbank.com.vn/tai-lieu-bieu-mau#category_3'
+        vib_url = 'https://www.vib.com.vn/vn/tiet-kiem/bieu-lai-suat-tiet-kiem-tai-quay'
         
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
@@ -598,7 +636,8 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'ctg', ctg_url))
         # print(self.__crawl(driver, 'tpb', tpb_url))
         # print(self.__crawl(driver, 'acb', acb_url))
-        print(self.__crawl(driver, 'vpb', vpb_url))
+        # print(self.__crawl(driver, 'vpb', vpb_url))
+        print(self.__crawl(driver, 'vib', vib_url))
         
         driver.quit()
         
