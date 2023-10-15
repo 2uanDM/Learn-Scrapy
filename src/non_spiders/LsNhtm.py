@@ -350,6 +350,63 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_tpb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('table', {'class': 'table_laisuat'})
+            
+            tbody = table.find('tbody')
+            
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            
+            # Khong ky han data
+            data['khong_ky_han'] = None
+            
+            # 1 thang data
+            mot_thang = float(rows[0].find_all('td')[2].text.strip())
+            data['1_thang'] = mot_thang
+            
+            # 3 thang data
+            ba_thang = float(rows[1].find_all('td')[2].text.strip())
+            data['3_thang'] = ba_thang
+            
+            # 6 thang data
+            sau_thang = float(rows[2].find_all('td')[2].text.strip())
+            data['6_thang'] = sau_thang
+            
+            # 9 thang data
+            data['9_thang'] = None
+            
+            # 12 thang data
+            mot_nam = float(rows[3].find_all('td')[2].text.strip())
+            data['12_thang'] = mot_nam
+            
+            # 18 thang data
+            muoi_ky = float(rows[4].find_all('td')[2].text.strip())
+            data['18_thang'] = muoi_ky
+            
+            # 24 thang data
+            hai_nam = float(rows[5].find_all('td')[2].text.strip())
+            data['24_thang'] = hai_nam
+            
+            # 36 thang data
+            ba_nam = float(rows[6].find_all('td')[2].text.strip())
+            data['36_thang'] = ba_nam
+            
+            return {
+                'status': 'success',
+                'message': 'Parse TPB successfully',
+                'data': data
+            }
+            
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM TPB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
@@ -385,6 +442,8 @@ class LsNhtm(Base):
             return self.parse_bid(html_str)
         elif type == 'ctg':
             return self.parse_ctg(html_str)
+        elif type == 'tpb':
+            return self.parse_tpb(html_str)
 
 
         time.sleep(0.5)
@@ -420,14 +479,17 @@ class LsNhtm(Base):
         agribank_url = 'https://www.agribank.com.vn/vn/lai-suat'
         bid_url = 'https://bidv.com.vn/vn/tra-cuu-lai-suat'
         ctg_url = 'https://www.vietinbank.vn/khaixuandonloc/lai-suat/'
+        tpb_url = 'https://tpb.vn/cong-cu-tinh-toan/lai-suat'
         
-        print(self.__crawl(driver, 'vcb', vcb_url))
-        print(self.__crawl(driver, 'mb', mb_url))
-        print(self.__crawl(driver, 'tcb', tcb_url))
-        print(self.__crawl(driver, 'stb', stb_url)) 
-        print(self.__crawl(driver, 'agribank', agribank_url))
-        print(self.__crawl(driver, 'bid', bid_url))
-        print(self.__crawl(driver, 'ctg', ctg_url))
+        # print(self.__crawl(driver, 'vcb', vcb_url))
+        # print(self.__crawl(driver, 'mb', mb_url))
+        # print(self.__crawl(driver, 'tcb', tcb_url))
+        # print(self.__crawl(driver, 'stb', stb_url)) 
+        # print(self.__crawl(driver, 'agribank', agribank_url))
+        # print(self.__crawl(driver, 'bid', bid_url))
+        # print(self.__crawl(driver, 'ctg', ctg_url))
+        # print(self.__crawl(driver, 'tpb', tpbank_url))
+        
         
         driver.quit()
         
