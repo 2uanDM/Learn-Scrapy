@@ -821,7 +821,7 @@ class ComodityIndex(Base):
         
         metal_shfe = self.get_result(
             self.get_metal_price_shfe,
-            (True, False)
+            (False, False)
         )
         
         if metal_shfe['status'] == 'error':

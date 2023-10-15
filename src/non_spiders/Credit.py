@@ -191,6 +191,9 @@ class Credit(Base):
             'message': 'Insert new data to mongodb successfully',
             'data': None
         }
+    
+    def run(self):
+        self.crawl(headless=True)
 
 if __name__ == '__main__':
     credit = Credit()

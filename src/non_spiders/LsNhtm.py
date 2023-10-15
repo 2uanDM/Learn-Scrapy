@@ -324,11 +324,18 @@ class LsNhtm(Base):
         stb_url = 'https://www.sacombank.com.vn/cong-cu/lai-suat.html/cf/lai-suat/tien-gui.html'
         agribank_url = 'https://www.agribank.com.vn/vn/lai-suat'
         
-        # print(self.__crawl(driver, 'vcb', vcb_url))
-        # print(self.__crawl(driver, 'mb', mb_url))
-        # print(self.__crawl(driver, 'tcb', tcb_url))
-        # print(self.__crawl(driver, 'stb', stb_url)) 
+        print(self.__crawl(driver, 'vcb', vcb_url))
+        print(self.__crawl(driver, 'mb', mb_url))
+        print(self.__crawl(driver, 'tcb', tcb_url))
+        print(self.__crawl(driver, 'stb', stb_url)) 
         print(self.__crawl(driver, 'agribank', agribank_url))
+        
+        driver.quit()
+        
+        return
+    
+    def run(self):
+        self.crawl_selenium()
 
 if __name__=='__main__':
     lsnhtm = LsNhtm()
