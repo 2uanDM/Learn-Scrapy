@@ -259,12 +259,46 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_bid(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            div_table = soup.find('div', {'id': 'rates'})
+            tbody = div_table.find('tbody')
+            
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            data = {}
+            rows = tbody.find_all('tr')
+            
+            # Khong ky han data
+            khong_ky_han = float(rows[1].find_all('td')[3].text.strip().replace('%', ''))
+            data['khong_ky_han'] = khong_ky_han
+            
+            # The rest data
+            for row in rows[2:]:
+                cells = row.find_all('td')
+                num_month = int(cells[1].text.strip().split(' ')[0])
+                
+                if num_month in months:
+                    lai_suat = float(cells[3].text.strip().replace('%', ''))
+                    data[f'{num_month}_thang'] = lai_suat
+            
+            return {
+                'status': 'success',
+                'message': 'Parse BID successfully',
+                'data': data
+            }
+        
+        except Exception as e:
+            message = f'Error when parse LS NHTM BID: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb']
-        parse_by_bs4 = ['vcb', 'mb']
+        parse_by_bs4 = ['vcb', 'mb','bid', 'agribank']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -290,6 +324,8 @@ class LsNhtm(Base):
             return self.parse_stb(html_str)
         elif type == 'agribank':
             return self.parse_agribank(html_str)
+        elif type == 'bid':
+            return self.parse_bid(html_str)
 
 
         time.sleep(0.5)
@@ -323,12 +359,14 @@ class LsNhtm(Base):
         tcb_url = 'https://techcombank.com/cong-cu-tien-ich/bieu-phi-lai-suat'
         stb_url = 'https://www.sacombank.com.vn/cong-cu/lai-suat.html/cf/lai-suat/tien-gui.html'
         agribank_url = 'https://www.agribank.com.vn/vn/lai-suat'
+        bid_url = 'https://bidv.com.vn/vn/tra-cuu-lai-suat'
         
-        print(self.__crawl(driver, 'vcb', vcb_url))
-        print(self.__crawl(driver, 'mb', mb_url))
-        print(self.__crawl(driver, 'tcb', tcb_url))
-        print(self.__crawl(driver, 'stb', stb_url)) 
-        print(self.__crawl(driver, 'agribank', agribank_url))
+        # print(self.__crawl(driver, 'vcb', vcb_url))
+        # print(self.__crawl(driver, 'mb', mb_url))
+        # print(self.__crawl(driver, 'tcb', tcb_url))
+        # print(self.__crawl(driver, 'stb', stb_url)) 
+        # print(self.__crawl(driver, 'agribank', agribank_url))
+        # print(self.__crawl(driver, 'bid', bid_url))
         
         driver.quit()
         
