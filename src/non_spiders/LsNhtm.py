@@ -535,12 +535,43 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_bab(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            tbody = soup.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            # Khong ky han data
+            data['khong_ky_han'] = float(rows[0].find_all('td')[3].text.strip())
+            
+            for row in rows[1:]:
+                ky_han = row.find_all('td')[0].text.strip()
+                num_month = int(ky_han.split(' ')[0])
+                
+                if num_month in months:
+                    lai_suat = float(row.find_all('td')[3].text.strip())
+                    data[f'{num_month}_thang'] = lai_suat
+            
+            return {
+                'status': 'success',
+                'message': 'Parse BAB successfully',
+                'data': data
+            }      
+                
+        except Exception as e:
+            message = f'Error when parse LS NHTM BAB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -587,6 +618,17 @@ class LsNhtm(Base):
             return self.parse_vpb(html_str)
         elif type == 'vib':
             return self.parse_vib(html_str)
+        elif type == 'bab':
+            driver.execute_script("""
+            var dropdown = document.getElementById("ctl00_PlaceHolderMain_g_3d987530_2758_4587_b052_bda8fbe88390_ctl00_DDL_LS");
+
+            dropdown.options[2].selected = true;
+
+            dropdown.dispatchEvent(new Event('change'));
+                                  """)
+            time.sleep(2)
+            html_str = driver.page_source
+            return self.parse_bab(html_str)
 
         time.sleep(0.5) 
     
@@ -625,6 +667,7 @@ class LsNhtm(Base):
         acb_url = 'https://www.acb.com.vn/lai-suat-tien-gui'
         vpb_url = 'https://www.vpbank.com.vn/tai-lieu-bieu-mau#category_3'
         vib_url = 'https://www.vib.com.vn/vn/tiet-kiem/bieu-lai-suat-tiet-kiem-tai-quay'
+        bab_url = 'https://www.baca-bank.vn/SitePages/website/lai-xuat.aspx?ac=L%u00e3i+su%u1ea5t&s=LX'
         
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
@@ -637,7 +680,8 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'tpb', tpb_url))
         # print(self.__crawl(driver, 'acb', acb_url))
         # print(self.__crawl(driver, 'vpb', vpb_url))
-        print(self.__crawl(driver, 'vib', vib_url))
+        # print(self.__crawl(driver, 'vib', vib_url))
+        print(self.__crawl(driver, 'bab', bab_url))
         
         driver.quit()
         
