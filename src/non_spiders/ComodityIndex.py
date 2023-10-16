@@ -442,12 +442,20 @@ class ComodityIndex(Base):
                 df = pd.read_csv(os.path.join(download_folder, file_name), header=1)
                 
                 # Get the index of row where Contract is "rb2310"
+                # if type == 0:
+                #     index = df[df['Contract'] == 'rb2310'].index[0]
+                # elif type == 1:
+                #     index = df[df['Contract'] == 'cu2310'].index[0]
+                # else: 
+                #     index = df[df['Contract'] == 'al2310'].index[0]
+
+                # HOT FIX: rb2310 -> rb2311
                 if type == 0:
-                    index = df[df['Contract'] == 'rb2310'].index[0]
+                    index = df[df['Contract'] == 'rb2311'].index[0]
                 elif type == 1:
-                    index = df[df['Contract'] == 'cu2310'].index[0]
+                    index = df[df['Contract'] == 'cu2311'].index[0]
                 else: 
-                    index = df[df['Contract'] == 'al2310'].index[0]
+                    index = df[df['Contract'] == 'al2311'].index[0]
                     
                 price = df.iloc[index]['Last']
                 
@@ -839,6 +847,7 @@ class ComodityIndex(Base):
         if len(errors) > 0:
             print('*******Errors*******', len(errors))
             # TODO: send email to admin using Telegram bot API
+            return
         else:
             print('*******No errors*******')
         
