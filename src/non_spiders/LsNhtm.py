@@ -15,6 +15,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup as bs
+from datetime import datetime
 
 class LsNhtm(Base):
     def __init__(self):
@@ -566,11 +567,68 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_hdb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            
+            # Find all the link to the pdf file
+            a_tags = soup.find_all(lambda tag: tag.name == 'a' and 'BIỂU LÃI SUẤT TIỀN GỬI KHÁCH HÀNG CÁ NHÂN' in tag.text)
+            
+            list_tags = [] # Store the href and its date
+            
+            # Get the link which is the latest
+            for tag in a_tags:
+                href = tag['href']
+                date_str = tag.text.strip().replace('BIỂU LÃI SUẤT TIỀN GỬI KHÁCH HÀNG CÁ NHÂN', '').strip()
+                date = datetime.strptime(date_str, '%d-%m-%Y')
+                list_tags.append((href, date))
+            
+            # Sort the list by date
+            list_tags.sort(key=lambda x: x[1], reverse=True)
+            link = list_tags[0][0]
+            
+            # -----------------------Download the pdf file to temp folder-----------------------
+            headers = {
+                'authority': 'hdbank.com.vn',
+                'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'accept-language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+                'cache-control': 'max-age=0',
+                'sec-ch-ua': '"Google Chrome";v="117", "Not;A=Brand";v="8", "Chromium";v="117"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"',
+                'sec-fetch-dest': 'document',
+                'sec-fetch-mode': 'navigate',
+                'sec-fetch-site': 'same-origin',
+                'sec-fetch-user': '?1',
+                'upgrade-insecure-requests': '1',
+                'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
+            }
+            
+            response = requests.request("GET", link, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                raise Exception(f'Error when download pdf file from {link}')
+            
+            download_folder = os.path.join(os.getcwd(), 'download', 'hdb')
+            shutil.rmtree(download_folder)
+            os.makedirs(download_folder, exist_ok=True)
+            
+            with open(os.path.join(download_folder, 'hdb.pdf'), 'wb') as f:
+                f.write(response.content)
+            
+            # -----------------------Parse the pdf file-----------------------
+            
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM HDB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
-        parse_by_pdf = ['tcb', 'stb', 'vpb']
+        parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb']
         parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab']
         
         if type in parse_by_bs4:
@@ -629,6 +687,8 @@ class LsNhtm(Base):
             time.sleep(2)
             html_str = driver.page_source
             return self.parse_bab(html_str)
+        elif type == 'hdb':
+            return self.parse_hdb(html_str)
 
         time.sleep(0.5) 
     
@@ -668,6 +728,7 @@ class LsNhtm(Base):
         vpb_url = 'https://www.vpbank.com.vn/tai-lieu-bieu-mau#category_3'
         vib_url = 'https://www.vib.com.vn/vn/tiet-kiem/bieu-lai-suat-tiet-kiem-tai-quay'
         bab_url = 'https://www.baca-bank.vn/SitePages/website/lai-xuat.aspx?ac=L%u00e3i+su%u1ea5t&s=LX'
+        hdb_url = 'https://hdbank.com.vn/vi/personal/cong-cu/interest-rate'
         
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
@@ -681,7 +742,8 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'acb', acb_url))
         # print(self.__crawl(driver, 'vpb', vpb_url))
         # print(self.__crawl(driver, 'vib', vib_url))
-        print(self.__crawl(driver, 'bab', bab_url))
+        # print(self.__crawl(driver, 'bab', bab_url))
+        print(self.__crawl(driver, 'hdb', hdb_url))
         
         driver.quit()
         
