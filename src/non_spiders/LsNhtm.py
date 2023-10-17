@@ -761,12 +761,43 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_ssb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('table')
+            tbody = soup.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            data['khong_ky_han'] = None
+            
+            for row in rows:
+                cells = row.find_all('td')
+                ky_han = cells[1].text.strip().split()[0]
+                lai_suat = cells[2].text.strip().replace('%', '')
+                
+                if int(ky_han) in months:
+                    data[f'{int(ky_han)}_thang'] = float(lai_suat) if isinstance(lai_suat, str) else None
+            
+            return {
+                'status': 'success',
+                'message': 'Parse SSB successfully',
+                'data': data
+            }
+                
+        except Exception as e:
+            message = f'Error when parse LS NHTM SSB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -832,6 +863,8 @@ class LsNhtm(Base):
             return self.parse_klb(html_str)
         elif type == 'lpb':
             return self.parse_lpb(html_str)
+        elif type == 'ssb':
+            return self.parse_ssb(html_str)
 
         time.sleep(0.5) 
     
@@ -893,7 +926,7 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'nab', nab_url))
         # print(self.__crawl(driver, 'klb', klb_url))
         # print(self.__crawl(driver, 'lpb', lpb_url))
-        print()
+        print(self.__crawl(driver, 'ssb', ssb_url))
         
         driver.quit()
         
