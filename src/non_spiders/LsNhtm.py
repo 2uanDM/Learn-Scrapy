@@ -1,4 +1,5 @@
 import os
+import re
 import shutil 
 import sys
 import time
@@ -628,12 +629,113 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_nab(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            selector = soup.find('select', {'id' : '259'})
+            
+            options = selector.find_all('option')
+            
+            href = None
+            
+            for option in options:
+                if option.text.strip() == 'Lãi suất Tiền gửi VND (%/năm)':
+                    href = option['data-news-href']
+                    break
+            
+            if href is None:
+                raise Exception('Cannot find the link to the table of NAB')
+
+            # Go to the link and get the html string
+            response = requests.request("GET", f'https://www.namabank.com.vn{href}', timeout=10)
+            soup = bs(response.text, 'html.parser')
+            
+            table = soup.find('table')
+            tbody = table.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            # for row in rows:
+            #     cells = row.find_all('td')
+            #     for cell in cells:
+            #         print(cell.text.strip(),  end = '|')
+            #     print()
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            for row in rows:
+                cells = row.find_all('td')
+                for cell in cells:
+                    print(cell.text.strip(),  end = '|')
+                print('-' * 50)
+            
+            for row in rows:
+                cells = row.find_all('td')
+                ky_han = cells[0].text.strip()
+                lai_suat = cells[1].text.strip()
+                if ky_han == 'KKH':
+                    data['khong_ky_han'] = float(lai_suat) if lai_suat != '-' else None
+                else:
+                    # Use regex to check if the ky han has 'tháng' in it, then extract the number
+                    if re.search(r'\d+ tháng', ky_han):
+                        num_month = int(re.findall(r'\d+', ky_han)[0])
+                        if num_month in months:
+                            data[f'{num_month}_thang'] = float(lai_suat) if lai_suat != '-' else None
+                
+            return {
+                'status': 'success',
+                'message': 'Parse NAB successfully',
+                'data': data
+            }
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM NAB: {str(e)}'
+            print(message)
+            return 
+    
+    def parse_klb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table_1 = soup.find('table', {'class': 'table'} )
+            table_2 = soup.find('table', {'class': 'table table-responsive'})
+            
+            tbody_1 = soup.find('tbody')
+            tbody_2 = table_2.find('tbody')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            # Get the khong ky han data
+            rows = tbody_1.find_all('tr')
+            lai_suat_khong_ky_han = float(rows[1].find_all('td')[1].text.strip())
+            data['khong_ky_han'] = lai_suat_khong_ky_han
+            
+            # Get the other data
+            rows = tbody_2.find_all('tr')
+            
+            for row in rows:
+                cells = row.find_all('td')
+                ky_han = cells[0].text.strip().split()[0]
+                
+                if int(ky_han) in months:
+                    data[f'{int(ky_han)}_thang'] = float(cells[1].text.strip())
+            
+            return {
+                'status': 'success',
+                'message': 'Parse KLB successfully',
+                'data': data
+            }
+                
+        except Exception as e:
+            message = f'Error when parse LS NHTM KLB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -693,6 +795,10 @@ class LsNhtm(Base):
             return self.parse_bab(html_str)
         elif type == 'hdb':
             return self.parse_hdb(html_str)
+        elif type == 'nab':
+            return self.parse_nab(html_str)
+        elif type == 'klb':
+            return self.parse_klb(html_str)
 
         time.sleep(0.5) 
     
@@ -733,7 +839,8 @@ class LsNhtm(Base):
         vib_url = 'https://www.vib.com.vn/vn/tiet-kiem/bieu-lai-suat-tiet-kiem-tai-quay'
         bab_url = 'https://www.baca-bank.vn/SitePages/website/lai-xuat.aspx?ac=L%u00e3i+su%u1ea5t&s=LX'
         hdb_url = 'https://hdbank.com.vn/vi/personal/cong-cu/interest-rate'
-        
+        nab_url = 'https://www.namabank.com.vn/lai-suat'
+        klb_url = 'https://laisuat.kienlongbank.com/lai-suat-ca-nhan'
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
         # print(self.__crawl(driver, 'mb', mb_url))
@@ -747,7 +854,9 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'vpb', vpb_url))
         # print(self.__crawl(driver, 'vib', vib_url))
         # print(self.__crawl(driver, 'bab', bab_url))
-        print(self.__crawl(driver, 'hdb', hdb_url))
+        # print(self.__crawl(driver, 'hdb', hdb_url))
+        # print(self.__crawl(driver, 'nab', nab_url))
+        print(self.__crawl(driver, 'klb', klb_url))
         
         driver.quit()
         
