@@ -31,7 +31,7 @@ if __name__=='__main__':
     ls_cafef_thread.join()
     ls_lnh_thread.join()
     
-    ls_nhtm.run() # This one cannot be run in a thread since it use tabula to parse pdf (jvm cannot be run in a thread)
+    # ls_nhtm.run() # This one cannot be run in a thread since it use tabula to parse pdf (jvm cannot be run in a thread)
     
     print('All threads finished their jobs')
     sys.exit(0)
