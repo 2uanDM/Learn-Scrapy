@@ -127,8 +127,52 @@ def extract_vpb():
             'data': None
         }
 
+def extract_hdb():
+    try:
+        hdb_folder = os.path.join(os.getcwd(), 'download', 'hdb')
+        files = os.listdir(hdb_folder)
+        
+        if 'hdb.pdf' not in files:
+            raise Exception('File "hdb.pdf" not found !')
+        else:
+            file_path = os.path.join(hdb_folder, 'hdb.pdf')
+            pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
+            df = pd.DataFrame(pdfData[0])
+            
+            # Extract the data
+            data = {}
+            
+            data['khong_ky_han'] = None
+            data['1_thang'] = df.iloc[9,1]
+            data['3_thang'] = df.iloc[11,1]
+            data['6_thang'] = df.iloc[14,1]
+            data['9_thang'] = df.iloc[17,1]
+            data['12_thang'] = df.iloc[23,1]
+            data['18_thang'] = df.iloc[29,1]
+            data['24_thang'] = df.iloc[30,1]
+            data['36_thang'] = df.iloc[31,1]
+
+            for key, value in list(data.items()):
+                data[key] = float(value.replace(',', '.')) if value is not None else None
+
+            return {
+                'status' : 'success',
+                'message': 'Parse HDB successfully',
+                'data': data
+            }
+
+    except Exception as e:
+        message = f'Error when parse LS NHTM HDB: {str(e)}'
+        print(message)
+        return {
+            'status': 'error',
+            'message': message,
+            'data': None
+        }
+
 if __name__=='__main__':
     # print(extract_tcb())
     # print(extract_stb())
-    print(extract_vpb())
+    # print(extract_vpb())
+    print(extract_hdb())
     

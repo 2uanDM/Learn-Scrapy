@@ -9,7 +9,7 @@ sys.path.append(os.getcwd())
 from src.non_spiders.Base import Base
 
 from src.utils.selenium import ChromeDriver
-from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb
+from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb, extract_hdb
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -617,7 +617,11 @@ class LsNhtm(Base):
                 f.write(response.content)
             
             # -----------------------Parse the pdf file-----------------------
-            
+            result = extract_hdb()
+            if result['status'] == 'error':
+                raise Exception(result['message'])
+            else:
+                return result
             
         except Exception as e:
             message = f'Error when parse LS NHTM HDB: {str(e)}'
@@ -754,6 +758,6 @@ class LsNhtm(Base):
 
 if __name__=='__main__':
     lsnhtm = LsNhtm()
-    lsnhtm.crawl_selenium()
+    lsnhtm.run()
         
         
