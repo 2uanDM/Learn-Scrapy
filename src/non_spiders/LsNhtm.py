@@ -730,12 +730,43 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_lpb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find_all('table')[1]
+            tbody = table.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            data['khong_ky_han'] = None
+            
+            for row in rows[2:]:
+                cells = row.find_all('td')
+                ky_han = cells[0].text.strip().split()[0]
+                lai_suat = cells[4].text.strip()
+                
+                if int(ky_han) in months:
+                    data[f'{int(ky_han)}_thang'] = float(lai_suat) if lai_suat != '-' else None
+                
+            return {
+                'status': 'success',
+                'message': 'Parse LPB successfully',
+                'data': data
+            }
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM LPB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -799,6 +830,8 @@ class LsNhtm(Base):
             return self.parse_nab(html_str)
         elif type == 'klb':
             return self.parse_klb(html_str)
+        elif type == 'lpb':
+            return self.parse_lpb(html_str)
 
         time.sleep(0.5) 
     
@@ -841,6 +874,8 @@ class LsNhtm(Base):
         hdb_url = 'https://hdbank.com.vn/vi/personal/cong-cu/interest-rate'
         nab_url = 'https://www.namabank.com.vn/lai-suat'
         klb_url = 'https://laisuat.kienlongbank.com/lai-suat-ca-nhan'
+        lpb_url = 'https://lpbank.com.vn/lai-suat-2/'
+        ssb_url = 'https://www.seabank.com.vn/interest'
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
         # print(self.__crawl(driver, 'mb', mb_url))
@@ -856,7 +891,9 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'bab', bab_url))
         # print(self.__crawl(driver, 'hdb', hdb_url))
         # print(self.__crawl(driver, 'nab', nab_url))
-        print(self.__crawl(driver, 'klb', klb_url))
+        # print(self.__crawl(driver, 'klb', klb_url))
+        # print(self.__crawl(driver, 'lpb', lpb_url))
+        print()
         
         driver.quit()
         
