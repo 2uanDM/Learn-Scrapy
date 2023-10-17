@@ -792,12 +792,15 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_pgb(self, html_str: str):
+        pass
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -865,6 +868,8 @@ class LsNhtm(Base):
             return self.parse_lpb(html_str)
         elif type == 'ssb':
             return self.parse_ssb(html_str)
+        elif type == 'pgb':
+            return self.parse_pgb(html_str)
 
         time.sleep(0.5) 
     
@@ -909,6 +914,7 @@ class LsNhtm(Base):
         klb_url = 'https://laisuat.kienlongbank.com/lai-suat-ca-nhan'
         lpb_url = 'https://lpbank.com.vn/lai-suat-2/'
         ssb_url = 'https://www.seabank.com.vn/interest'
+        pgb_url = 'https://www.pgbank.com.vn/lai-suat-tiet-kiem/ca-nhan-vnd'
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
         # print(self.__crawl(driver, 'mb', mb_url))
@@ -926,7 +932,8 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'nab', nab_url))
         # print(self.__crawl(driver, 'klb', klb_url))
         # print(self.__crawl(driver, 'lpb', lpb_url))
-        print(self.__crawl(driver, 'ssb', ssb_url))
+        # print(self.__crawl(driver, 'ssb', ssb_url))
+        print(self.__crawl(driver, 'pgb', pgb_url))
         
         driver.quit()
         
