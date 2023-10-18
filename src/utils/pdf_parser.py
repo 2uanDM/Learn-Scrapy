@@ -170,9 +170,51 @@ def extract_hdb():
             'data': None
         }
 
+def extract_eib():
+    try:
+        eib_folder = os.path.join(os.getcwd(), 'download', 'eib')
+        files = os.listdir(eib_folder)
+        if 'eib.pdf' not in files:
+            raise Exception('File eib.pdf not found')
+        else:
+            file_path = os.path.join(eib_folder, 'eib.pdf')
+            pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
+            df = pd.DataFrame(pdfData[0])
+            
+            cutted_df = df.iloc[9:26, [0,3]]
+            cutted_df.columns = ['ky_han', 'lai_suat']
+            cutted_df.reset_index(drop=True, inplace=True)
+            
+            data = {'khong_ky_han': None}
+            months = [1,3,6,9,12,18,24,36]
+            
+            for idx, row in cutted_df.iterrows():
+                ky_han = row['ky_han']
+                lai_suat = row['lai_suat']
+                
+                num_month = int(ky_han.split(' ')[0])
+                if num_month in months:
+                    data[f'{num_month}_thang'] = float(lai_suat.replace(',', '.')) if lai_suat is not None else None
+            
+            return {
+                'status': 'success',
+                'message': 'Parse EIB successfully',
+                'data': data
+            }
+            
+    except Exception as e:
+        message = f'Error when parse LS NHTM EIB: {str(e)}'
+        print(message)
+        return {
+            'status': 'error',
+            'message': message,
+            'data': None
+        }
+
 if __name__=='__main__':
     # print(extract_tcb())
     # print(extract_stb())
     # print(extract_vpb())
-    print(extract_hdb())
+    # print(extract_hdb())
+    print(extract_eib())
     

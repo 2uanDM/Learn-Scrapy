@@ -10,7 +10,7 @@ sys.path.append(os.getcwd())
 from src.non_spiders.Base import Base
 
 from src.utils.selenium import ChromeDriver
-from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb, extract_hdb
+from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb, extract_hdb, extract_eib
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -828,11 +828,68 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_eib(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            h3_tag = soup.find(lambda tag: tag.name == 'h3' and 'LÃI SUẤT' in tag.string)
+            ul_next = h3_tag.find_next('ul')
+            vnd_li_inside = ul_next.find('li')
+            
+            if 'VNĐ' not in vnd_li_inside.text.strip():
+                raise Exception('The structure of the page EIB has changed (VND pdf link is not the first one)')
+            
+            a_tag = vnd_li_inside.find('a')
+            link = f'https://eximbank.com.vn{a_tag["href"]}'
+            
+            # -----------------------Download the pdf file to temp folder-----------------------
+            headers = {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+                'Cache-Control': 'max-age=0',
+                'Connection': 'keep-alive',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+                'sec-ch-ua': '"Chromium";v="118", "Google Chrome";v="118", "Not=A?Brand";v="99"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"'
+            }
+            
+            response = requests.request("GET", link, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                raise Exception(f'Error when download pdf file from {link}')
+            
+            download_folder = os.path.join(os.getcwd(), 'download', 'eib')
+            
+            if os.path.exists(download_folder):
+                shutil.rmtree(download_folder)
+            os.makedirs(download_folder, exist_ok=True)
+            
+            with open(os.path.join(download_folder, 'eib.pdf'), 'wb') as f:
+                f.write(response.content)
+                
+            # -----------------------Parse the pdf file-----------------------
+            result = extract_eib()
+            
+            if result['status'] == 'error':
+                raise Exception(result['message'])
+            else:
+                return result
+
+        except Exception as e:
+            message = f'Error when parse LS NHTM EIB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
-        parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb']
+        parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib']
         parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb']
         
         if type in parse_by_bs4:
@@ -903,6 +960,8 @@ class LsNhtm(Base):
             return self.parse_ssb(html_str)
         elif type == 'pgb':
             return self.parse_pgb(html_str)
+        elif type == 'eib':
+            return self.parse_eib(html_str)
 
         time.sleep(0.5) 
     
@@ -948,6 +1007,7 @@ class LsNhtm(Base):
         lpb_url = 'https://lpbank.com.vn/lai-suat-2/'
         ssb_url = 'https://www.seabank.com.vn/interest'
         pgb_url = 'https://www.pgbank.com.vn/lai-suat-tiet-kiem/ca-nhan-vnd'
+        eib_url = 'https://eximbank.com.vn/khachhangcanhan'
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
         # print(self.__crawl(driver, 'mb', mb_url))
@@ -966,7 +1026,8 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'klb', klb_url))
         # print(self.__crawl(driver, 'lpb', lpb_url))
         # print(self.__crawl(driver, 'ssb', ssb_url))
-        print(self.__crawl(driver, 'pgb', pgb_url))
+        # print(self.__crawl(driver, 'pgb', pgb_url))
+        print(self.__crawl(driver, 'eib', eib_url))
         
         driver.quit()
         
