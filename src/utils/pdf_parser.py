@@ -139,6 +139,8 @@ def extract_hdb():
             pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
             df = pd.DataFrame(pdfData[0])
             
+            # print(df)
+            
             # Extract the data
             data = {}
             
@@ -148,9 +150,9 @@ def extract_hdb():
             data['6_thang'] = df.iloc[14,1]
             data['9_thang'] = df.iloc[17,1]
             data['12_thang'] = df.iloc[23,1]
-            data['18_thang'] = df.iloc[29,1]
-            data['24_thang'] = df.iloc[30,1]
-            data['36_thang'] = df.iloc[31,1]
+            data['18_thang'] = df.iloc[31,1]
+            data['24_thang'] = df.iloc[32,1]
+            data['36_thang'] = df.iloc[33,1]
 
             for key, value in list(data.items()):
                 data[key] = float(value.replace(',', '.')) if value is not None else None
@@ -219,10 +221,56 @@ def extract_eib():
             'data': None
         }
 
+def extract_vbb():
+    try:
+        vbb_folder = os.path.join(os.getcwd(), 'download', 'vbb')
+        files = os.listdir(vbb_folder)
+        if 'vbb.pdf' not in files:
+            raise Exception('File vbb.pdf not found')
+        else:
+            file_path = os.path.join(vbb_folder, 'vbb.pdf')
+            pdfData = tabula.read_pdf(file_path, pages=1, encoding='utf-8')
+            df = pd.DataFrame(pdfData[0])
+            
+            cutted_df = df.iloc[2:22, [0,1]]
+            cutted_df.columns = ['ky_han', 'lai_suat']
+            cutted_df.reset_index(drop=True, inplace=True)
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            # Khong ky han data
+            data['khong_ky_han'] = None
+            
+            # The rest
+            for idx, row in cutted_df.iterrows():
+                ky_han = row['ky_han']
+                lai_suat = row['lai_suat']
+                
+                num_month = int(ky_han.split()[0])
+                if num_month in months:
+                    data[f'{num_month}_thang'] = float(lai_suat.replace('%', '')) if lai_suat != '-' else None
+            
+            return {
+                'status': 'success',
+                'message': 'Parse VBB successfully',
+                'data': data
+            }
+        
+    except Exception as e:
+        message = f'Error when parse LS NHTM VBB: {str(e)}'
+        print(message)
+        return {
+            'status': 'error',
+            'message': message,
+            'data': None
+        }
+
 if __name__=='__main__':
     # print(extract_tcb())
     # print(extract_stb())
     # print(extract_vpb())
-    # print(extract_hdb())
-    print(extract_eib())
+    print(extract_hdb())
+    # print(extract_eib())
+    # print(extract_vbb())
     

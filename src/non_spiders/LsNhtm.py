@@ -10,7 +10,7 @@ sys.path.append(os.getcwd())
 from src.non_spiders.Base import Base
 
 from src.utils.selenium import ChromeDriver
-from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb, extract_hdb, extract_eib
+from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb, extract_hdb, extract_eib, extract_vbb
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -413,12 +413,9 @@ class LsNhtm(Base):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find_all('div', {'class': 'cumulative_saving_tables table-responsive'})[2]
-            print('Found table')
             tbody = table.find('tbody')
-            print('Found tbody')
-            
             rows = tbody.find_all('tr')
-            print('Found rows')
+            
             months = [1, 3, 6, 9, 12, 18, 24, 36]
             data = {}
             
@@ -654,19 +651,8 @@ class LsNhtm(Base):
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
             
-            # for row in rows:
-            #     cells = row.find_all('td')
-            #     for cell in cells:
-            #         print(cell.text.strip(),  end = '|')
-            #     print()
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
-            for row in rows:
-                cells = row.find_all('td')
-                for cell in cells:
-                    print(cell.text.strip(),  end = '|')
-                print('-' * 50)
             
             for row in rows:
                 cells = row.find_all('td')
@@ -923,12 +909,96 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
         
+    def parse_ocb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('table')
+            tbody = table.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            for rows in rows:
+                cells = rows.find_all('td')
+                ky_han = cells[0].text.strip()
+                
+                if ky_han == 'Không kì hạn':
+                    data['khong_ky_han'] = float(cells[3].text.strip()) if cells[3].text.strip() != '' else None
+                else:
+                    num_month = int(ky_han.split()[0])
+                    if num_month in months:
+                        data[f'{num_month}_thang'] = float(cells[3].text.strip()) if cells[3].text.strip() != '' else None
+            
+            return {
+                'status': 'success',
+                'message': 'Parse OCB successfully',
+                'data': data
+            }
+                
+                
+        except Exception as e:
+            message = f'Error when parse LS NHTM OCB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
+    def parse_vbb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            div_container = soup.find('div', {'id': '3946'})
+            a_tag = div_container.find('a')
+            
+            link = a_tag['href']
+            
+            # -----------------------Download the pdf file to temp folder-----------------------
+            headers = {
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+                'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
+                'Cache-Control': 'max-age=0',
+                'Connection': 'keep-alive',
+                'Sec-Fetch-Dest': 'document',
+                'Sec-Fetch-Mode': 'navigate',
+                'Sec-Fetch-Site': 'none',
+                'Sec-Fetch-User': '?1',
+                'Upgrade-Insecure-Requests': '1',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/118.0.0.0 Safari/537.36',
+                'sec-ch-ua': '"Chromium";v="118", "Google Chrome";v="118", "Not=A?Brand";v="99"',
+                'sec-ch-ua-mobile': '?0',
+                'sec-ch-ua-platform': '"Windows"'
+            }
+            
+            response = requests.request("GET", link, headers=headers, timeout=10)
+            
+            if response.status_code != 200:
+                raise Exception(f'Error when download pdf file from {link}')
+            
+            download_folder = os.path.join(os.getcwd(), 'download', 'vbb')
+            
+            if os.path.exists(download_folder):
+                shutil.rmtree(download_folder)
+            os.makedirs(download_folder, exist_ok=True)
+            
+            with open(os.path.join(download_folder, 'vbb.pdf'), 'wb') as f:
+                f.write(response.content)
+            
+            # -----------------------Parse the pdf file-----------------------
+            result = extract_vbb()
+            
+            if result['status'] == 'error':
+                raise Exception(result['message'])
+
+            return result
+        except Exception as e:
+            message = f'Error when parse LS NHTM VBB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
-        parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb']
+        parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib', 'vbb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -1002,6 +1072,12 @@ class LsNhtm(Base):
             return self.parse_eib(html_str)
         elif type == 'sgb':
             return self.parse_sgb(html_str)
+        elif type == 'ocb':
+            return self.parse_ocb(html_str)
+        elif type == 'vbb':
+            return self.parse_vbb(html_str)
+        else:
+            raise Exception(f'Cannot find the type {type}')
             
         time.sleep(0.5) 
     
@@ -1049,27 +1125,31 @@ class LsNhtm(Base):
         pgb_url = 'https://www.pgbank.com.vn/lai-suat-tiet-kiem/ca-nhan-vnd'
         eib_url = 'https://eximbank.com.vn/khachhangcanhan'
         sgb_url = 'https://www.saigonbank.com.vn/vi/truy-cap-nhanh/lai-suat'
+        ocb_url = 'https://ocb.com.vn/vi/cong-cu/lai-suat'
+        vbb_url = 'https://www.vietbank.com.vn/ca-nhan/ho-tro/lai-suat'
         
-        # print(self.__crawl(driver, 'vcb', vcb_url))
-        # print(self.__crawl(driver, 'mb', mb_url))
-        # print(self.__crawl(driver, 'tcb', tcb_url))
-        # print(self.__crawl(driver, 'stb', stb_url)) 
-        # print(self.__crawl(driver, 'agribank', agribank_url))
-        # print(self.__crawl(driver, 'bid', bid_url))
-        # print(self.__crawl(driver, 'ctg', ctg_url))
-        # print(self.__crawl(driver, 'tpb', tpb_url))
-        # print(self.__crawl(driver, 'acb', acb_url))
-        # print(self.__crawl(driver, 'vpb', vpb_url))
-        # print(self.__crawl(driver, 'vib', vib_url))
-        # print(self.__crawl(driver, 'bab', bab_url))
-        # print(self.__crawl(driver, 'hdb', hdb_url))
-        # print(self.__crawl(driver, 'nab', nab_url))
-        # print(self.__crawl(driver, 'klb', klb_url))
-        # print(self.__crawl(driver, 'lpb', lpb_url))
-        # print(self.__crawl(driver, 'ssb', ssb_url))
-        # print(self.__crawl(driver, 'pgb', pgb_url))
-        # print(self.__crawl(driver, 'eib', eib_url))
+        print(self.__crawl(driver, 'vcb', vcb_url))
+        print(self.__crawl(driver, 'mb', mb_url))
+        print(self.__crawl(driver, 'tcb', tcb_url))
+        print(self.__crawl(driver, 'stb', stb_url)) 
+        print(self.__crawl(driver, 'agribank', agribank_url))
+        print(self.__crawl(driver, 'bid', bid_url))
+        print(self.__crawl(driver, 'ctg', ctg_url))
+        print(self.__crawl(driver, 'tpb', tpb_url))
+        print(self.__crawl(driver, 'acb', acb_url))
+        print(self.__crawl(driver, 'vpb', vpb_url))
+        print(self.__crawl(driver, 'vib', vib_url))
+        print(self.__crawl(driver, 'bab', bab_url))
+        print(self.__crawl(driver, 'hdb', hdb_url))
+        print(self.__crawl(driver, 'nab', nab_url))
+        print(self.__crawl(driver, 'klb', klb_url))
+        print(self.__crawl(driver, 'lpb', lpb_url))
+        print(self.__crawl(driver, 'ssb', ssb_url))
+        print(self.__crawl(driver, 'pgb', pgb_url))
+        print(self.__crawl(driver, 'eib', eib_url))
         print(self.__crawl(driver, 'sgb', sgb_url))
+        print(self.__crawl(driver, 'ocb', ocb_url))
+        print(self.__crawl(driver, 'vbb', vbb_url))
         
         driver.quit()
         
