@@ -181,12 +181,20 @@ def extract_eib():
             pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
             df = pd.DataFrame(pdfData[0])
             
+            # Khong ky han data
+            lai_suat_khong_ky_han = df.iloc[5, 3]
+            
+            if lai_suat_khong_ky_han is not None:
+                lai_suat_khong_ky_han = float(lai_suat_khong_ky_han.replace(',', '.')) if lai_suat_khong_ky_han is not None else None
+            
+            data = {'khong_ky_han': lai_suat_khong_ky_han}
+            
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
             cutted_df = df.iloc[9:26, [0,3]]
             cutted_df.columns = ['ky_han', 'lai_suat']
             cutted_df.reset_index(drop=True, inplace=True)
             
-            data = {'khong_ky_han': None}
-            months = [1,3,6,9,12,18,24,36]
             
             for idx, row in cutted_df.iterrows():
                 ky_han = row['ky_han']

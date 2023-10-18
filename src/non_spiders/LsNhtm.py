@@ -885,12 +885,50 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_sgb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('table')
+            tbody = table.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            # Khong ky han data
+            khong_ky_han_lai_suat = rows[2].find_all('td')[1].text.strip()
+            
+            if khong_ky_han_lai_suat != '':
+                data['khong_ky_han'] = float(khong_ky_han_lai_suat.replace('%', ''))
+            else:
+                data['khong_ky_han'] = None
+            
+            # The rest data
+            for row in rows[4:]:
+                cells = row.find_all('td')
+                ky_han = cells[0].text.strip().split()[0]
+                lai_suat = cells[1].text.strip()
+                
+                if int(ky_han) in months:
+                    data[f'{int(ky_han)}_thang'] = float(lai_suat.replace('%', '')) if lai_suat != '' else None
+                
+            return {
+                'status': 'success',
+                'message': 'Parse SGB successfully',
+                'data': data
+            }
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM SGB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
+        
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb']
+        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -962,7 +1000,9 @@ class LsNhtm(Base):
             return self.parse_pgb(html_str)
         elif type == 'eib':
             return self.parse_eib(html_str)
-
+        elif type == 'sgb':
+            return self.parse_sgb(html_str)
+            
         time.sleep(0.5) 
     
     def crawl_selenium(self) -> dict:
@@ -1008,6 +1048,7 @@ class LsNhtm(Base):
         ssb_url = 'https://www.seabank.com.vn/interest'
         pgb_url = 'https://www.pgbank.com.vn/lai-suat-tiet-kiem/ca-nhan-vnd'
         eib_url = 'https://eximbank.com.vn/khachhangcanhan'
+        sgb_url = 'https://www.saigonbank.com.vn/vi/truy-cap-nhanh/lai-suat'
         
         # print(self.__crawl(driver, 'vcb', vcb_url))
         # print(self.__crawl(driver, 'mb', mb_url))
@@ -1027,7 +1068,8 @@ class LsNhtm(Base):
         # print(self.__crawl(driver, 'lpb', lpb_url))
         # print(self.__crawl(driver, 'ssb', ssb_url))
         # print(self.__crawl(driver, 'pgb', pgb_url))
-        print(self.__crawl(driver, 'eib', eib_url))
+        # print(self.__crawl(driver, 'eib', eib_url))
+        print(self.__crawl(driver, 'sgb', sgb_url))
         
         driver.quit()
         
