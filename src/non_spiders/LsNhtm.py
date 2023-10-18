@@ -793,7 +793,40 @@ class LsNhtm(Base):
             return self.error_handler(message)
     
     def parse_pgb(self, html_str: str):
-        pass
+        try:
+            soup = bs(html_str, 'html.parser')
+            table = soup.find('table')
+            tbody = table.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+            
+            data['khong_ky_han'] = None
+            
+            for row in rows:
+                cells = row.find_all('td')
+                
+                ky_han: str = cells[0].text.strip()
+                lai_suat: str = cells[1].text.strip()
+                
+                num_month = int(ky_han.split()[0])
+                if num_month in months:
+                    if lai_suat != '' or lai_suat != None:
+                        data[f'{num_month}_thang'] = float(lai_suat)
+                    else:
+                        data[f'{num_month}_thang'] = None
+            
+            return {
+                'status': 'success',
+                'message': 'Parse PGB successfully',
+                'data': data
+            }
+                
+        except Exception as e:
+            message = f'Error when parse LS NHTM PGB: {str(e)}'
+            print(message)
+            return self.error_handler(message)
     
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
