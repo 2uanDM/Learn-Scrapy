@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Optional
 
 class SchemaTopic2():
     
@@ -351,4 +352,111 @@ class SchemaTopic2():
         
         return data
         
+    def lai_suat_nhtm(self, date_created, **kwargs) -> dict:
+        list_args = ['vcb', 'tcb', 'stb', 'mbb', 'agr', 'bid', 'ctg', 'tpb', 'acb', 'vpb', 'vib', 'bab', 'hdb', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'eib', 'sgb', 'vbb', 'ocb', 'abb', 'ncb']
         
+        if set(kwargs) != set(list_args):
+            for arg in kwargs:
+                print(arg)
+                if arg not in list_args:
+                    raise ValueError(f'Invalid argument {arg}')
+            
+            for arg in list_args:
+                if arg not in kwargs:
+                    raise ValueError(f'Argument {arg} is missing')
+        
+        # Make sure that the params are all valid:
+        if not isinstance(date_created, datetime):
+            raise ValueError('date_created must be a datetime object')
+        
+        for arg in kwargs:  
+            dict_format = {
+                'khong_ky_han' : Optional[float] | Optional[int],
+                '1_thang' : Optional[float] | Optional[int],
+                '3_thang' : Optional[float] | Optional[int],
+                '6_thang' : Optional[float] | Optional[int],
+                '12_thang' : Optional[float] | Optional[int],
+                '18_thang' : Optional[float] | Optional[int],
+                '24_thang' : Optional[float] | Optional[int],
+                '36_thang' : Optional[float] | Optional[int],
+            }
+            
+            if not isinstance(kwargs[arg], dict):
+                raise ValueError(f'{arg} must be a dict')
+            
+            for bank in kwargs[arg]:
+                if not isinstance(kwargs[arg][bank], dict_format[bank]):
+                    raise ValueError(f'{arg}["{bank}"] must be a float or None')
+
+        data = {
+            'date_created': date_created,
+            'data': {
+                'vcb': kwargs['vcb'],
+                'tcb': kwargs['tcb'],
+                'stb': kwargs['stb'],
+                'mbb': kwargs['mbb'],
+                'agr': kwargs['agr'],
+                'bid': kwargs['bid'],
+                'ctg': kwargs['ctg'],
+                'tpb': kwargs['tpb'],
+                'acb': kwargs['acb'],
+                'vpb': kwargs['vpb'],
+                'vib': kwargs['vib'],
+                'bab': kwargs['bab'],
+                'hdb': kwargs['hdb'],
+                'nab': kwargs['nab'],
+                'klb': kwargs['klb'],
+                'lpb': kwargs['lpb'],
+                'ssb': kwargs['ssb'],
+                'pgb': kwargs['pgb'],
+                'eib': kwargs['eib'],
+                'sgb': kwargs['sgb'],
+                'vbb': kwargs['vbb'],
+                'ocb': kwargs['ocb'],
+                'abb': kwargs['abb'],
+                'ncb': kwargs['ncb'],
+            }
+        }
+        
+        return data
+
+if __name__=='__main__':
+    
+    test_dict = {
+        'khong_ky_han' : None,
+        '1_thang' : None,
+        '3_thang' : None,
+        '6_thang' : None,
+        '12_thang' : None,
+        '18_thang' : None,
+        '24_thang' : None,
+        '36_thang' : None,
+    }
+    
+    print(SchemaTopic2().lai_suat_nhtm(
+        date_created=datetime.now(),
+        vcb=test_dict,
+        tcb=test_dict,
+        stb=test_dict,
+        mbb=test_dict,
+        agr=test_dict,
+        bid=test_dict,
+        ctg=test_dict,
+        tpb=test_dict,
+        acb=test_dict,
+        vpb=test_dict,
+        vib=test_dict,
+        bab=test_dict,
+        hdb=test_dict,
+        nab=test_dict,
+        klb=test_dict,
+        lpb=test_dict,
+        ssb=test_dict,
+        pgb=test_dict,
+        eib=test_dict,
+        sgb=test_dict,
+        vbb=test_dict,
+        ocb=test_dict,
+        abb=test_dict,
+        ncb=test_dict
+    ))

@@ -11,6 +11,7 @@ from src.non_spiders.Base import Base
 
 from src.utils.selenium import ChromeDriver
 from src.utils.pdf_parser import extract_tcb, extract_stb, extract_vpb, extract_hdb, extract_eib, extract_vbb
+from src.utils.database.schema import SchemaTopic2
 
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
@@ -64,7 +65,7 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
         
-    def parse_mb(self, html_str: str):
+    def parse_mbb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             # Remove all attribute in html tag
@@ -222,7 +223,7 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)    
     
-    def parse_agribank(self, html_str: str):
+    def parse_agr(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table') # Find the first table
@@ -998,7 +999,7 @@ class LsNhtm(Base):
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib', 'vbb']
-        parse_by_bs4 = ['vcb', 'mb', 'bid', 'agribank', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb']
+        parse_by_bs4 = ['vcb', 'mbb', 'bid', 'agr', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -1016,14 +1017,14 @@ class LsNhtm(Base):
         
         if type == 'vcb':
             return self.parse_vcb(html_str)
-        elif type == 'mb':
-            return self.parse_mb(html_str)
+        elif type == 'mbb':
+            return self.parse_mbb(html_str)
         elif type == 'tcb':
             return self.parse_tcb(html_str)
         elif type == 'stb':
             return self.parse_stb(html_str)
-        elif type == 'agribank':
-            return self.parse_agribank(html_str)
+        elif type == 'agr':
+            return self.parse_agr(html_str)
         elif type == 'bid':
             return self.parse_bid(html_str)
         elif type == 'ctg':
@@ -1106,10 +1107,10 @@ class LsNhtm(Base):
         driver = ChromeDriver(headless=False).driver
         
         vcb_url = 'https://www.vietcombank.com.vn/vi-VN/KHCN/Cong-cu-Tien-ich/KHCN---Lai-suat'
-        mb_url = 'https://www.mbbank.com.vn/Fee'
+        mbb_url = 'https://www.mbbank.com.vn/Fee'
         tcb_url = 'https://techcombank.com/cong-cu-tien-ich/bieu-phi-lai-suat'
         stb_url = 'https://www.sacombank.com.vn/cong-cu/lai-suat.html/cf/lai-suat/tien-gui.html'
-        agribank_url = 'https://www.agribank.com.vn/vn/lai-suat'
+        agr_url = 'https://www.agribank.com.vn/vn/lai-suat'
         bid_url = 'https://bidv.com.vn/vn/tra-cuu-lai-suat'
         ctg_url = 'https://www.vietinbank.vn/khaixuandonloc/lai-suat/'
         tpb_url = 'https://tpb.vn/cong-cu-tinh-toan/lai-suat'
@@ -1127,31 +1128,65 @@ class LsNhtm(Base):
         sgb_url = 'https://www.saigonbank.com.vn/vi/truy-cap-nhanh/lai-suat'
         ocb_url = 'https://ocb.com.vn/vi/cong-cu/lai-suat'
         vbb_url = 'https://www.vietbank.com.vn/ca-nhan/ho-tro/lai-suat'
+        # TODO: abb and ncb
+        # Create a list of tuple ('vcb', vcb_url) of all banks above
         
-        print(self.__crawl(driver, 'vcb', vcb_url))
-        print(self.__crawl(driver, 'mb', mb_url))
-        print(self.__crawl(driver, 'tcb', tcb_url))
-        print(self.__crawl(driver, 'stb', stb_url)) 
-        print(self.__crawl(driver, 'agribank', agribank_url))
-        print(self.__crawl(driver, 'bid', bid_url))
-        print(self.__crawl(driver, 'ctg', ctg_url))
-        print(self.__crawl(driver, 'tpb', tpb_url))
-        print(self.__crawl(driver, 'acb', acb_url))
-        print(self.__crawl(driver, 'vpb', vpb_url))
-        print(self.__crawl(driver, 'vib', vib_url))
-        print(self.__crawl(driver, 'bab', bab_url))
-        print(self.__crawl(driver, 'hdb', hdb_url))
-        print(self.__crawl(driver, 'nab', nab_url))
-        print(self.__crawl(driver, 'klb', klb_url))
-        print(self.__crawl(driver, 'lpb', lpb_url))
-        print(self.__crawl(driver, 'ssb', ssb_url))
-        print(self.__crawl(driver, 'pgb', pgb_url))
-        print(self.__crawl(driver, 'eib', eib_url))
-        print(self.__crawl(driver, 'sgb', sgb_url))
-        print(self.__crawl(driver, 'ocb', ocb_url))
-        print(self.__crawl(driver, 'vbb', vbb_url))
+        banks = [
+            ('vcb', vcb_url),
+            ('mbb', mbb_url),
+            ('tcb', tcb_url),
+            ('stb', stb_url),
+            ('agr', agr_url),
+            ('bid', bid_url),
+            ('ctg', ctg_url),
+            ('tpb', tpb_url),
+            ('acb', acb_url),
+            ('vpb', vpb_url),
+            ('vib', vib_url),
+            ('bab', bab_url),
+            ('hdb', hdb_url),
+            ('nab', nab_url),
+            ('klb', klb_url),
+            ('lpb', lpb_url),
+            ('ssb', ssb_url),
+            ('pgb', pgb_url),
+            ('eib', eib_url),
+            ('sgb', sgb_url),
+            ('ocb', ocb_url),
+            ('vbb', vbb_url)
+        ]
         
-        driver.quit()
+        data = {}
+        
+        error_data = {
+            'khong_ky_han' : None,
+            '1_thang' : None,
+            '3_thang' : None,
+            '6_thang' : None,
+            '12_thang' : None,
+            '18_thang' : None,
+            '24_thang' : None,
+            '36_thang' : None,
+        }
+        
+        for bank in banks:
+            result = self.__crawl(driver, bank[0], bank[1])
+            print(result)
+            if result['status'] == 'error':
+                data[bank[0]] = error_data # If error, set the data to None
+            else:
+                data[bank[0]] = result['data']
+        
+        # Close the driver
+        driver.quit() 
+        
+        # Import the data to schema
+        data = SchemaTopic2().lai_suat_nhtm(
+            date_created=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
+            **data
+        )
+        
+        print(data)
         
         return
     
