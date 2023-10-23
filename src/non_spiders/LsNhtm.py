@@ -3,6 +3,7 @@ import re
 import shutil 
 import sys
 import time
+import traceback
 
 import requests
 sys.path.append(os.getcwd())
@@ -994,12 +995,65 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
     
+    def parse_abb(self, html_str: str):
+        try:
+            soup = bs(html_str, 'html.parser')
+            first_table = soup.find('table')
+            tbody = first_table.find('tbody')
+            rows = tbody.find_all('tr')
+            
+            data = {}
+            months = [1, 3, 6, 9, 12, 18, 24, 36]
+
+            def xu_li_lai_suat(lai_suat: str) -> float:
+                if lai_suat == '':
+                    return None
+
+                lai_suat = lai_suat.replace('%', '')
+                lai_suat = lai_suat.replace('(*)', '')
+                
+                lai_suat = float(lai_suat.strip())
+                
+                return lai_suat
+            
+            for row in rows:
+                cells = row.find_all('td')
+                
+                ky_han: str = cells[0].text.strip()
+                
+                if not ky_han.isdigit():
+                    if ky_han == 'KKH':
+                        lai_suat = cells[1].text.strip()
+                        data['khong_ky_han'] = xu_li_lai_suat(lai_suat)
+                    else:
+                        num_month = int(cells[1].text.strip())
+                        
+                        if num_month in months:
+                            lai_suat = cells[2].text.strip()
+                            data[f'{num_month}_thang'] = xu_li_lai_suat(lai_suat)
+                else:
+                    num_month = int(ky_han)
+                    if num_month in months:
+                        lai_suat = cells[1].text.strip()
+                        data[f'{num_month}_thang'] = xu_li_lai_suat(lai_suat)
+                
+            return {
+                'status': 'success',
+                'message': 'Parse ABB successfully',
+                'data': data
+            }
+            
+        except Exception as e:
+            message = f'Error when parse LS NHTM ABB: {traceback.format_exc()}'
+            print(message)
+            return self.error_handler(message)
+    
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
         
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib', 'vbb']
-        parse_by_bs4 = ['vcb', 'mbb', 'bid', 'agr', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb']
+        parse_by_bs4 = ['vcb', 'mbb', 'bid', 'agr', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb', 'abb']
         
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
@@ -1077,6 +1131,8 @@ class LsNhtm(Base):
             return self.parse_ocb(html_str)
         elif type == 'vbb':
             return self.parse_vbb(html_str)
+        elif type == 'abb':
+            return self.parse_abb(html_str)
         else:
             raise Exception(f'Cannot find the type {type}')
             
@@ -1128,7 +1184,8 @@ class LsNhtm(Base):
         sgb_url = 'https://www.saigonbank.com.vn/vi/truy-cap-nhanh/lai-suat'
         ocb_url = 'https://ocb.com.vn/vi/cong-cu/lai-suat'
         vbb_url = 'https://www.vietbank.com.vn/ca-nhan/ho-tro/lai-suat'
-        # TODO: abb and ncb
+        abb_url = 'https://abbank.vn/thong-tin/lai-suat-tiet-kiem-vnd.html'
+        
         # Create a list of tuple ('vcb', vcb_url) of all banks above
         
         banks = [
@@ -1153,7 +1210,8 @@ class LsNhtm(Base):
             ('eib', eib_url),
             ('sgb', sgb_url),
             ('ocb', ocb_url),
-            ('vbb', vbb_url)
+            ('vbb', vbb_url),
+            ('abb', abb_url)
         ]
         
         data = {}
@@ -1169,13 +1227,30 @@ class LsNhtm(Base):
             '36_thang' : None,
         }
         
+        error_banks = []
+        
         for bank in banks:
-            result = self.__crawl(driver, bank[0], bank[1])
-            print(result)
-            if result['status'] == 'error':
-                data[bank[0]] = error_data # If error, set the data to None
-            else:
-                data[bank[0]] = result['data']
+            number_of_tried = 0
+            while number_of_tried < 3:
+                try:
+                    number_of_tried += 1
+                    print(f'Try to crawl "{bank[0]}" {number_of_tried} time(s) ...' )
+                    result = self.__crawl(driver, bank[0], bank[1])
+                    
+                    print(result)
+                    
+                    if result['status'] == 'error':
+                        data[bank[0]] = error_data # If error, set the data to None
+                    else:
+                        data[bank[0]] = result['data']
+                    
+                    break
+                except Exception as e:
+                    print(f'Error when crawl "{bank[0]}": {traceback.format_exc()} ...')
+                    continue
+            
+            if number_of_tried >= 5:
+                error_banks.append(bank[0])
         
         # Close the driver
         driver.quit() 
@@ -1186,7 +1261,9 @@ class LsNhtm(Base):
             **data
         )
         
-        print(data)
+        # Push the data to database
+        self.db.update_collection('lai_suat_nhtm', data)
+        print('Push data to database successfully')
         
         return
     

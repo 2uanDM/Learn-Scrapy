@@ -353,11 +353,10 @@ class SchemaTopic2():
         return data
         
     def lai_suat_nhtm(self, date_created, **kwargs) -> dict:
-        list_args = ['vcb', 'tcb', 'stb', 'mbb', 'agr', 'bid', 'ctg', 'tpb', 'acb', 'vpb', 'vib', 'bab', 'hdb', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'eib', 'sgb', 'vbb', 'ocb', 'abb', 'ncb']
+        list_args = ['vcb', 'tcb', 'stb', 'mbb', 'agr', 'bid', 'ctg', 'tpb', 'acb', 'vpb', 'vib', 'bab', 'hdb', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'eib', 'sgb', 'vbb', 'ocb', 'abb'] # ncb is missing
         
         if set(kwargs) != set(list_args):
             for arg in kwargs:
-                print(arg)
                 if arg not in list_args:
                     raise ValueError(f'Invalid argument {arg}')
             
@@ -375,6 +374,7 @@ class SchemaTopic2():
                 '1_thang' : Optional[float] | Optional[int],
                 '3_thang' : Optional[float] | Optional[int],
                 '6_thang' : Optional[float] | Optional[int],
+                '9_thang' : Optional[float] | Optional[int],
                 '12_thang' : Optional[float] | Optional[int],
                 '18_thang' : Optional[float] | Optional[int],
                 '24_thang' : Optional[float] | Optional[int],
@@ -413,8 +413,7 @@ class SchemaTopic2():
                 'sgb': kwargs['sgb'],
                 'vbb': kwargs['vbb'],
                 'ocb': kwargs['ocb'],
-                'abb': kwargs['abb'],
-                'ncb': kwargs['ncb'],
+                'abb': kwargs['abb']
             }
         }
         
@@ -427,6 +426,7 @@ if __name__=='__main__':
         '1_thang' : None,
         '3_thang' : None,
         '6_thang' : None,
+        '9_thang' : None, 
         '12_thang' : None,
         '18_thang' : None,
         '24_thang' : None,
@@ -457,6 +457,5 @@ if __name__=='__main__':
         sgb=test_dict,
         vbb=test_dict,
         ocb=test_dict,
-        abb=test_dict,
-        ncb=test_dict
+        abb=test_dict
     ))
