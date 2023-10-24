@@ -1,21 +1,39 @@
+import os
+import sys
 import subprocess
 
-def run(spider_name: str, **kwargs):
+# Add the path of the project to sys.path
+sys.path.append(os.getcwd())
+
+def run_crawler(spider_name: str, **kwargs):
+    '''
+        Kwargs:
+            - `filename` (str) : File will be exported to folder results. Example: 'exchange_rate.csv'
+            - `save_folder` (str) : File will be exported to this directory. Default: '../results'
+            - `overwrite` (bool) : If True, the file will be overwritten. If False, the file will be appended. Default: False
+            - `nolog` (bool): If True, the log will not be printed. Default: False
+    '''
+
     # Define the command as a list of strings
-    command = ["cd", "src", "&&", "scrapy", "crawl", spider_name]
+    command = ["scrapy", "crawl", spider_name]
+
+    # Set default save_folder to '../results'
+    save_folder = kwargs.get('save_folder', os.path.join(os.getcwd(), 'results'))
 
     # Add the arguments
-    if kwargs.get('export_dir'):
-        if kwargs.get('overwrite'):
-            command += ["-o", f"../results/{kwargs['export_dir']}", "-a", "dont_overwrite=False"]
-        else:
-            command += ["-o", f"../results/{kwargs['export_dir']}", "-a", "dont_overwrite=True"]
-       
+    filename = kwargs.get('filename')
+    if filename:
+        save_dir = os.path.join(save_folder, filename)
+        print('Save directory: ' + save_dir)
+        overwrite = kwargs.get('overwrite', False)
+        command += ["-o" if overwrite is False else "-O", save_dir]
+
     if kwargs.get('nolog'):
-        command += ["--loglevel=ERROR"]
+        # command += ["--loglevel=ERROR"]
+        command += ["--nolog"]
+        
+        
 
     # Use subprocess to run the command
-    subprocess.run(command, shell=True)
+    subprocess.run(command)
 
-if __name__ == '__main__':
-    run(spider_name='quotes')
