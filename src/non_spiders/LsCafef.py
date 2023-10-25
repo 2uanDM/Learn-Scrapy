@@ -55,6 +55,7 @@ class LsCafef(Base):
         
         # Parse data
         data_dict = json.loads(response.text)
+        print(data_dict)
         data = data_dict['data']['interestRates']
         
         abbank = None
