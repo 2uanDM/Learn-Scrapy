@@ -1,15 +1,15 @@
+from dotenv import load_dotenv
+import datetime
+import polars as pl
+from pydantic import BaseModel, Field
+from pymongo.server_api import ServerApi
+from pymongo.mongo_client import MongoClient
+import pymongo
 import os
 import sys
 sys.path.append(os.getcwd())
 
-import pymongo
-from pymongo.mongo_client import MongoClient
-from pymongo.server_api import ServerApi
-from pydantic import BaseModel, Field
 
-import polars as pl
-import datetime
-from dotenv import load_dotenv
 load_dotenv()
 
 
@@ -18,13 +18,13 @@ class MongoDB():
 
     def __init__(self, cluster: str) -> None:
         self.client = MongoClient(self.uri, server_api=ServerApi('1'))
-        
+
         # Get the cluster
         self.db = self.client[cluster]
-    
+
     def get_db(self):
         return self.db
-    
+
     def update_collection(self, collection_name: str, data):
         collection = self.db[collection_name]
         if isinstance(data, list):
@@ -38,7 +38,6 @@ class MongoDB():
 #     cluster = MongoDB(
 #         cluster='topic2'
 #     )
-    
+
 #     db = cluster.get_db()
 #     db.tin_dung.create_index([('month', pymongo.ASCENDING), ('year', pymongo.ASCENDING)], unique=True)
-    
