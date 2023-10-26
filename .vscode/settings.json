@@ -1,5 +1,5 @@
 {
-  "autopep8.args": ["--max-line-length", "120", "--ignore E4"],
+  "autopep8.args": ["--max-line-length", "120"],
   "git.ignoreLimitWarning": true,
   "sqltools.useNodeRuntime": false,
   "files.exclude": {
