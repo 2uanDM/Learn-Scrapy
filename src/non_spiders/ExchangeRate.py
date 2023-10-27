@@ -1,8 +1,3 @@
-from datetime import datetime
-from src.utils.io import write_csv
-from src.utils.database.schema import SchemaTopic2
-from src.utils.crawler import run_crawler
-from src.non_spiders.Base import Base
 import pandas as pd
 import base64
 import io
@@ -10,7 +5,13 @@ import json
 import requests
 import os
 import sys
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd()) # NOQA
+
+from datetime import datetime
+from src.utils.io import write_csv
+from src.utils.database.schema import SchemaTopic2
+from src.utils.crawler import run_crawler
+from src.non_spiders.Base import Base
 
 
 class ExchangeRate(Base):

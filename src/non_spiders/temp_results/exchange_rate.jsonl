@@ -1,1 +1,1 @@
-{"status": "success", "USD": "25.249", "EUR": "26.714", "CNY": "3.294,13"}
+{"status": "error", "message": "<twisted.python.failure.Failure twisted.web._newclient.ResponseNeverReceived: [<twisted.python.failure.Failure twisted.internet.error.ConnectionLost: Connection to the other side was lost in a non-clean fashion: Connection lost.>]>", "data": null}
