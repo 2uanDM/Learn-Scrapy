@@ -78,7 +78,6 @@ class ExchangeRate(Base):
         except Exception as e:
             message = f'An error occurs: {str(e)}'
             return self.error_handler(message)
-
         if response.status_code != 200:
             message = f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}'
             return self.error_handler(message)
@@ -168,7 +167,11 @@ class ExchangeRate(Base):
         response_NHNN = self.get_exchange_rate_NHNN()
         if response_NHNN['status'] == 'error':
             print(response_NHNN['message'])
-            return
+            response_NHNN['data'] = {
+                'USD': '0,0',
+                'EUR': '0,0',
+                'CNY': '0,0'
+            }
         print(f'Exchange rate from NHNN: {json.dumps(response_NHNN["data"], indent=4, ensure_ascii=False)}')
 
         # ---------====================Merge the data====================---------
