@@ -1,7 +1,7 @@
 {
   "autopep8.args": ["--max-line-length", "120"],
   "files.exclude": {
-    ".venv": false,
+    ".venv": true,
     "**/__pycache__": true,
     ".gitattributes": true,
 
