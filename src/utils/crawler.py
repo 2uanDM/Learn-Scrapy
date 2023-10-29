@@ -5,6 +5,7 @@ import subprocess
 # Add the path of the project to sys.path
 sys.path.append(os.getcwd())
 
+
 def run_crawler(spider_name: str, **kwargs):
     '''
         Kwargs:
@@ -31,9 +32,6 @@ def run_crawler(spider_name: str, **kwargs):
     if kwargs.get('nolog'):
         # command += ["--loglevel=ERROR"]
         command += ["--nolog"]
-        
-        
 
     # Use subprocess to run the command
     subprocess.run(command)
-
