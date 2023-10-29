@@ -1,12 +1,12 @@
+import zipfile
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from selenium import webdriver
 import os
 import sys
 sys.path.append(os.getcwd())
 
-from selenium import webdriver
-from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver.chrome.service import Service
-from selenium.webdriver.chrome.options import Options
-import zipfile
 
 manifest_json = """
 {
@@ -28,6 +28,7 @@ manifest_json = """
     "minimum_chrome_version":"22.0.0"
 }
 """
+
 
 def get_background_js(host, port, user, password):
     background_js = """
@@ -63,6 +64,7 @@ def get_background_js(host, port, user, password):
 
     return background_js
 
+
 class ChromeDriver():
     def __init__(self, headless: bool = False, **kwargs) -> None:
         '''
@@ -70,7 +72,7 @@ class ChromeDriver():
             - headless: bool
             - download_path: str
             - authenticate_proxy: dict
-            
+
             ```python
             {
                 'host': Any,
@@ -82,24 +84,32 @@ class ChromeDriver():
         '''
         # Get the keyword arguments
         self.headless = headless
-        
+        self.disable_js = kwargs.get('disable_js', False)
+        self.disable_images = kwargs.get('disable_images', False)
+
         self.download_path = kwargs.get('download_path', None)
         self.authenticate_proxy = kwargs.get('authenticate_proxy', None)
-        
+
         # Initiate the driver
         webdriver_service = Service(ChromeDriverManager().install())
-        
+
         chrome_options = Options()
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--log-level=3")
-        
+
         if self.headless:
             chrome_options.add_argument("--headless")
-            
+
+        if self.disable_js:
+            chrome_options.add_experimental_option("prefs", {'profile.managed_default_content_settings.javascript': 2})
+
+        if self.disable_images:
+            chrome_options.add_experimental_option("prefs", {'profile.managed_default_content_settings.images': 2})
+
         if self.download_path is not None:
             prefs = {"download.default_directory": self.download_path}
             chrome_options.add_experimental_option("prefs", prefs)
-        
+
         if self.authenticate_proxy is not None:
             host = self.authenticate_proxy['host']
             port = self.authenticate_proxy['port']
@@ -117,6 +127,6 @@ class ChromeDriver():
 
         # Get the driver
         self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
-        
+
         # Set the timeout
-        self.driver.set_page_load_timeout(120)
+        # self.driver.set_page_load_timeout(120)
