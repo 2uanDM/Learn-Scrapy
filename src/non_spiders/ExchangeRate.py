@@ -5,7 +5,7 @@ import json
 import requests
 import os
 import sys
-sys.path.append(os.getcwd()) # NOQA
+sys.path.append(os.getcwd())  # NOQA
 
 from datetime import datetime
 from src.utils.io import write_csv

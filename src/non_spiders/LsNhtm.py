@@ -1,12 +1,12 @@
 import os
 import re
-import shutil 
+import shutil
 import sys
 import time
 import traceback
 
 import requests
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())  # NOQA
 
 from src.non_spiders.Base import Base
 
@@ -20,42 +20,43 @@ from selenium.webdriver.support.ui import WebDriverWait
 from bs4 import BeautifulSoup as bs
 from datetime import datetime
 
+
 class LsNhtm(Base):
     def __init__(self):
         super().__init__()
-        
+
     def parse_vcb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table', {'class': 'table-responsive'})
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
-            
+
             for row in rows:
                 cells = row.find_all('td')
                 ky_han = cells[0].text.strip()
                 rate = float(cells[1].text.replace('%', '').strip())
-                
+
                 if ky_han == 'Không kỳ hạn':
                     ky_han = 'khong_ky_han'
                 else:
                     ky_han = ky_han.replace(' tháng', '_thang')
-                
+
                 if ky_han == '48_thang':
                     break
-                
+
                 if ky_han == '12_thang':
                     data[ky_han] = rate
                     data['18_thang'] = None
-                    
+
                 data[ky_han] = rate
-            
+
             del data['7 ngày']
             del data['14 ngày']
             del data['2_thang']
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse VCB successfully',
@@ -65,15 +66,15 @@ class LsNhtm(Base):
             message = f'Error when parse LS NHTM VCB: {str(e)}'
             print(message)
             return self.error_handler(message)
-        
+
     def parse_mbb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             # Remove all attribute in html tag
             for tag in soup.find_all(True):
                 tag.attr = {}
-            block = soup.find('div', {'id':'card-info0'})
-            block_2 = block.find('div' ,{'class' : 'detail-panel-body'})
+            block = soup.find('div', {'id': 'card-info0'})
+            block_2 = block.find('div', {'class': 'detail-panel-body'})
             table = block_2.find('table')
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
@@ -84,18 +85,18 @@ class LsNhtm(Base):
                 cells = row.find_all('td')
                 ky_han = cells[0].text.strip()
                 lai_tra_sau: float = float(cells[1].text.strip().replace('%', ''))
-                
+
                 if ky_han == 'KKH':
                     ky_han = 'khong_ky_han'
                 else:
                     number: int = int(ky_han.split(' ')[0])
                     ky_han = f'{number}_thang'
-                
+
                 if ky_han == '48_thang':
                     break
-                
+
                 data[ky_han] = lai_tra_sau
-            
+
             # Remove unnecessary data
             del data['2_thang']
             del data['4_thang']
@@ -106,7 +107,7 @@ class LsNhtm(Base):
             del data['11_thang']
             del data['13_thang']
             del data['15_thang']
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse MB successfully',
@@ -116,7 +117,7 @@ class LsNhtm(Base):
             message = f'Error when parse LS NHTM MB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_tcb(self, html_str: str):
         try:
             # -----------------------Get the link to download pdf file-----------------------
@@ -127,12 +128,12 @@ class LsNhtm(Base):
             # Check if the link is valid
             if link.find('techcombank.com') == -1:
                 raise Exception('Link is not valid')
-        
+
             # -----------------------Download the pdf file to temp folder-----------------------
             download_folder = os.path.join(os.getcwd(), 'download', 'tcb')
             shutil.rmtree(download_folder)
             os.makedirs(download_folder)
-            
+
             headers = {
                 'authority': 'techcombank.com',
                 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -147,30 +148,30 @@ class LsNhtm(Base):
                 'sec-fetch-user': '?1',
                 'upgrade-insecure-requests': '1',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
-            }           
-            
+            }
+
             response = requests.request("GET", link, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 raise Exception(f'Error when download pdf file from {link}')
-            
+
             with open(os.path.join(download_folder, 'tcb.pdf'), 'wb') as f:
                 f.write(response.content)
-            
+
             # -----------------------Parse the pdf file-----------------------
             time.sleep(1)
             result = extract_tcb()
-            
+
             if result['status'] == 'error':
                 raise Exception(result['message'])
-            
+
             return result
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM TCB: {str(e)}'
             print(message)
             return self.error_handler(message)
-        
+
     def parse_stb(self, html_str: str):
         try:
             # -----------------------Get the link to download pdf file-----------------------
@@ -178,15 +179,15 @@ class LsNhtm(Base):
             div_link = soup.find('div', {'class': 'div-download__lang--wrapper'})
             data_href = div_link.find('p')['data-href']
             link = f'https://www.sacombank.com.vn{data_href}'
-            
+
             if link.find('sacombank/files/cong-cu/lai-suat') == -1:
                 raise Exception('Link is not valid')
-            
+
             # -----------------------Download the pdf file to temp folder-----------------------
             download_folder = os.path.join(os.getcwd(), 'download', 'stb')
             shutil.rmtree(download_folder)
             os.makedirs(download_folder)
-            
+
             headers = {
                 'authority': 'www.sacombank.com.vn',
                 'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -202,263 +203,262 @@ class LsNhtm(Base):
                 'upgrade-insecure-requests': '1',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
             }
-            
+
             response = requests.request("GET", link, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 raise Exception(f'Error when download pdf file from {link}')
-            
+
             with open(os.path.join(download_folder, 'stb.pdf'), 'wb') as f:
                 f.write(response.content)
-            
+
             # -----------------------Parse the pdf file-----------------------
             result = extract_stb()
-            
+
             if result['status'] == 'error':
                 raise Exception(result['message'])
-            
+
             return result
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM STB: {str(e)}'
             print(message)
-            return self.error_handler(message)    
-    
+            return self.error_handler(message)
+
     def parse_agr(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
-            table = soup.find('table') # Find the first table
+            table = soup.find('table')  # Find the first table
             tbody = table.find('tbody')
-            
+
             rows = tbody.find_all('tr')
-            
+
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
-            # Khong ky han data 
+
+            # Khong ky han data
             khong_ky_han = float(rows[0].find_all('td')[1].text.strip().replace('%', ''))
             data = {'khong_ky_han': khong_ky_han}
-            
+
             # The rest data
             rest_rows = rows[1:]
-            
+
             for row in rest_rows[:-1]:
                 cells = row.find_all('td')
-                
+
                 num_month = int(cells[0].text.strip().split(' ')[0])
-                
+
                 if num_month in months:
                     lai_suat = float(cells[1].text.strip().replace('%', ''))
                     data[f'{num_month}_thang'] = lai_suat
-            
+
             data['36_thang'] = None
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse Agribank successfully',
                 'data': data
             }
-                
+
         except Exception as e:
             message = f'Error when parse LS NHTM Agribank: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_bid(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             div_table = soup.find('div', {'id': 'rates'})
             tbody = div_table.find('tbody')
-            
+
             months = [1, 3, 6, 9, 12, 18, 24, 36]
             data = {}
             rows = tbody.find_all('tr')
-            
+
             # Khong ky han data
             khong_ky_han = float(rows[1].find_all('td')[3].text.strip().replace('%', ''))
             data['khong_ky_han'] = khong_ky_han
-            
+
             # The rest data
             for row in rows[2:]:
                 cells = row.find_all('td')
                 num_month = int(cells[1].text.strip().split(' ')[0])
-                
+
                 if num_month in months:
                     lai_suat = float(cells[3].text.strip().replace('%', ''))
                     data[f'{num_month}_thang'] = lai_suat
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse BID successfully',
                 'data': data
             }
-        
+
         except Exception as e:
             message = f'Error when parse LS NHTM BID: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_ctg(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table', {'id': 'hor-ex-b'})
             tbody = table.find('tbody')
-            
+
             rows = tbody.find_all('tr')
-            
+
             data = {}
-            
+
             # Khong ky han data
             khong_ky_han = float(rows[3].find_all('td')[1].text.strip().replace(',', '.'))
             data['khong_ky_han'] = khong_ky_han
-            
+
             # 1 thang data
             mot_thang = float(rows[5].find_all('td')[1].text.strip().replace(',', '.'))
             data['1_thang'] = mot_thang
-            
+
             # 3 thang data
             ba_thang = float(rows[7].find_all('td')[1].text.strip().replace(',', '.'))
             data['3_thang'] = ba_thang
-            
+
             # 6 thang data
             sau_thang = float(rows[10].find_all('td')[1].text.strip().replace(',', '.'))
             data['6_thang'] = sau_thang
-            
+
             # 9 thang data
             chin_thang = float(rows[13].find_all('td')[1].text.strip().replace(',', '.'))
             data['9_thang'] = chin_thang
-            
+
             # 12 thang data
             mot_nam = float(rows[16].find_all('td')[1].text.strip().replace(',', '.'))
             data['12_thang'] = mot_nam
-            
+
             # 18 thang data
             muoi_ky = float(rows[18].find_all('td')[1].text.strip().replace(',', '.'))
             data['18_thang'] = muoi_ky
-            
+
             # 24 thang data
             hai_nam = float(rows[19].find_all('td')[1].text.strip().replace(',', '.'))
             data['24_thang'] = hai_nam
-            
+
             # 36 thang data
             ba_nam = float(rows[20].find_all('td')[1].text.strip().replace(',', '.'))
             data['36_thang'] = ba_nam
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse CTG successfully',
                 'data': data
             }
-        
+
         except Exception as e:
             message = f'Error when parse LS NHTM CTG: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_tpb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table', {'class': 'table_laisuat'})
-            
+
             tbody = table.find('tbody')
-            
+
             rows = tbody.find_all('tr')
-            
+
             data = {}
-            
+
             # Khong ky han data
             data['khong_ky_han'] = None
-            
+
             # 1 thang data
             mot_thang = float(rows[0].find_all('td')[2].text.strip())
             data['1_thang'] = mot_thang
-            
+
             # 3 thang data
             ba_thang = float(rows[1].find_all('td')[2].text.strip())
             data['3_thang'] = ba_thang
-            
+
             # 6 thang data
             sau_thang = float(rows[2].find_all('td')[2].text.strip())
             data['6_thang'] = sau_thang
-            
+
             # 9 thang data
             data['9_thang'] = None
-            
+
             # 12 thang data
             mot_nam = float(rows[3].find_all('td')[2].text.strip())
             data['12_thang'] = mot_nam
-            
+
             # 18 thang data
             muoi_ky = float(rows[4].find_all('td')[2].text.strip())
             data['18_thang'] = muoi_ky
-            
+
             # 24 thang data
             hai_nam = float(rows[5].find_all('td')[2].text.strip())
             data['24_thang'] = hai_nam
-            
+
             # 36 thang data
             ba_nam = float(rows[6].find_all('td')[2].text.strip())
             data['36_thang'] = ba_nam
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse TPB successfully',
                 'data': data
             }
-            
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM TPB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_acb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find_all('div', {'class': 'cumulative_saving_tables table-responsive'})[2]
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             months = [1, 3, 6, 9, 12, 18, 24, 36]
             data = {}
-            
+
             # Khong ky han data
             data['khong_ky_han'] = None
-            
+
             # 1 thang data
             mot_thang = float(rows[5].find_all('td')[2].text.strip().replace(',', '.'))
             data['1_thang'] = mot_thang
-            
+
             # The rest data
             for row in rows[6:]:
                 cells = row.find_all('td')
-    
-                ky_han = cells[0].text.strip().replace('T','')
-    
+
+                ky_han = cells[0].text.strip().replace('T', '')
+
                 if int(ky_han) in months:
                     lai_suat = float(cells[1].text.strip().replace(',', '.'))
                     data[f'{ky_han}_thang'] = lai_suat
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse ACB successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM ACB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_vpb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
-            
+
             # Find the link to the pdf file
             h3_tag = soup.find(lambda tag: tag.name == 'h3' and 'KHCN - Bảng lãi suất huy động' in tag.string)
-            a_tag= h3_tag.find_next('a')
-            href= a_tag['href']
+            a_tag = h3_tag.find_next('a')
+            href = a_tag['href']
             full_url = f'https://www.vpbank.com.vn{href}'
-            
+
             # ---------------Download the pdf file-----------------------
             headers = {
                 'authority': 'www.vpbank.com.vn',
@@ -475,118 +475,119 @@ class LsNhtm(Base):
                 'upgrade-insecure-requests': '1',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
             }
-            
+
             response = requests.request("GET", full_url, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 raise Exception(f'Error when download pdf file from {full_url}')
-            
+
             download_folder = os.path.join(os.getcwd(), 'download', 'vpb')
             shutil.rmtree(download_folder)
             os.makedirs(download_folder, exist_ok=True)
-            
+
             with open(os.path.join(download_folder, 'vpb.pdf'), 'wb') as f:
                 f.write(response.content)
-            
+
             # -----------------------Parse the pdf file-----------------------
             result = extract_vpb()
-            
+
             if result['status'] == 'error':
                 raise Exception(result['message'])
             else:
                 return result
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM VPB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_vib(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('div', {'class': 'bx-wrapper'})
             col = table.find_all('div', {'class': 'vib-v2-box-slider-expression'})[1]
             cells = col.find_all('div', {'class': 'vib-v2-line-box-table-expression'})
-            
+
             if len(cells) != 15:
                 raise Exception('The structure of the page VIB has changed')
-            
+
             data = {}
-            
+
             # Khong ky han data
             data['khong_ky_han'] = None
-            
-            data['1_thang'] = float(cells[0].text.strip().replace('%',''))
-            data['3_thang'] = float(cells[4].text.strip().replace('%',''))
-            data['6_thang'] = float(cells[1].text.strip().replace('%',''))
-            data['9_thang'] = float(cells[7].text.strip().replace('%',''))
-            data['12_thang'] = float(cells[10].text.strip().replace('%',''))
-            data['18_thang'] = float(cells[12].text.strip().replace('%',''))
-            data['24_thang'] = float(cells[13].text.strip().replace('%',''))
-            data['36_thang'] = float(cells[14].text.strip().replace('%',''))
-            
+
+            data['1_thang'] = float(cells[0].text.strip().replace('%', ''))
+            data['3_thang'] = float(cells[4].text.strip().replace('%', ''))
+            data['6_thang'] = float(cells[1].text.strip().replace('%', ''))
+            data['9_thang'] = float(cells[7].text.strip().replace('%', ''))
+            data['12_thang'] = float(cells[10].text.strip().replace('%', ''))
+            data['18_thang'] = float(cells[12].text.strip().replace('%', ''))
+            data['24_thang'] = float(cells[13].text.strip().replace('%', ''))
+            data['36_thang'] = float(cells[14].text.strip().replace('%', ''))
+
             return {
                 'status': 'success',
                 'message': 'Parse VIB successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM VIB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_bab(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             tbody = soup.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             # Khong ky han data
             data['khong_ky_han'] = float(rows[0].find_all('td')[3].text.strip())
-            
+
             for row in rows[1:]:
                 ky_han = row.find_all('td')[0].text.strip()
                 num_month = int(ky_han.split(' ')[0])
-                
+
                 if num_month in months:
                     lai_suat = float(row.find_all('td')[3].text.strip())
                     data[f'{num_month}_thang'] = lai_suat
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse BAB successfully',
                 'data': data
-            }      
-                
+            }
+
         except Exception as e:
             message = f'Error when parse LS NHTM BAB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_hdb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
-            
+
             # Find all the link to the pdf file
-            a_tags = soup.find_all(lambda tag: tag.name == 'a' and 'BIỂU LÃI SUẤT TIỀN GỬI KHÁCH HÀNG CÁ NHÂN' in tag.text)
-            
-            list_tags = [] # Store the href and its date
-            
+            a_tags = soup.find_all(lambda tag: tag.name ==
+                                   'a' and 'BIỂU LÃI SUẤT TIỀN GỬI KHÁCH HÀNG CÁ NHÂN' in tag.text)
+
+            list_tags = []  # Store the href and its date
+
             # Get the link which is the latest
             for tag in a_tags:
                 href = tag['href']
                 date_str = tag.text.strip().replace('BIỂU LÃI SUẤT TIỀN GỬI KHÁCH HÀNG CÁ NHÂN', '').strip()
                 date = datetime.strptime(date_str, '%d-%m-%Y')
                 list_tags.append((href, date))
-            
+
             # Sort the list by date
             list_tags.sort(key=lambda x: x[1], reverse=True)
             link = list_tags[0][0]
-            
+
             # -----------------------Download the pdf file to temp folder-----------------------
             headers = {
                 'authority': 'hdbank.com.vn',
@@ -603,59 +604,59 @@ class LsNhtm(Base):
                 'upgrade-insecure-requests': '1',
                 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
             }
-            
+
             response = requests.request("GET", link, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 raise Exception(f'Error when download pdf file from {link}')
-            
+
             download_folder = os.path.join(os.getcwd(), 'download', 'hdb')
             shutil.rmtree(download_folder)
             os.makedirs(download_folder, exist_ok=True)
-            
+
             with open(os.path.join(download_folder, 'hdb.pdf'), 'wb') as f:
                 f.write(response.content)
-            
+
             # -----------------------Parse the pdf file-----------------------
             result = extract_hdb()
             if result['status'] == 'error':
                 raise Exception(result['message'])
             else:
                 return result
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM HDB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_nab(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
-            selector = soup.find('select', {'id' : '259'})
-            
+            selector = soup.find('select', {'id': '259'})
+
             options = selector.find_all('option')
-            
+
             href = None
-            
+
             for option in options:
                 if option.text.strip() == 'Lãi suất Tiền gửi VND (%/năm)':
                     href = option['data-news-href']
                     break
-            
+
             if href is None:
                 raise Exception('Cannot find the link to the table of NAB')
 
             # Go to the link and get the html string
             response = requests.request("GET", f'https://www.namabank.com.vn{href}', timeout=10)
             soup = bs(response.text, 'html.parser')
-            
+
             table = soup.find('table')
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             for row in rows:
                 cells = row.find_all('td')
                 ky_han = cells[0].text.strip()
@@ -668,167 +669,167 @@ class LsNhtm(Base):
                         num_month = int(re.findall(r'\d+', ky_han)[0])
                         if num_month in months:
                             data[f'{num_month}_thang'] = float(lai_suat) if lai_suat != '-' else None
-                
+
             return {
                 'status': 'success',
                 'message': 'Parse NAB successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM NAB: {str(e)}'
             print(message)
-            return 
-    
+            return
+
     def parse_klb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
-            table_1 = soup.find('table', {'class': 'table'} )
+            table_1 = soup.find('table', {'class': 'table'})
             table_2 = soup.find('table', {'class': 'table table-responsive'})
-            
+
             tbody_1 = soup.find('tbody')
             tbody_2 = table_2.find('tbody')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             # Get the khong ky han data
             rows = tbody_1.find_all('tr')
             lai_suat_khong_ky_han = float(rows[1].find_all('td')[1].text.strip())
             data['khong_ky_han'] = lai_suat_khong_ky_han
-            
+
             # Get the other data
             rows = tbody_2.find_all('tr')
-            
+
             for row in rows:
                 cells = row.find_all('td')
                 ky_han = cells[0].text.strip().split()[0]
-                
+
                 if int(ky_han) in months:
                     data[f'{int(ky_han)}_thang'] = float(cells[1].text.strip())
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse KLB successfully',
                 'data': data
             }
-                
+
         except Exception as e:
             message = f'Error when parse LS NHTM KLB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_lpb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find_all('table')[1]
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             data['khong_ky_han'] = None
-            
+
             for row in rows[2:]:
                 cells = row.find_all('td')
                 ky_han = cells[0].text.strip().split()[0]
                 lai_suat = cells[4].text.strip()
-                
+
                 if int(ky_han) in months:
                     data[f'{int(ky_han)}_thang'] = float(lai_suat) if lai_suat != '-' else None
-                
+
             return {
                 'status': 'success',
                 'message': 'Parse LPB successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM LPB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_ssb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table')
             tbody = soup.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             data['khong_ky_han'] = None
-            
+
             for row in rows:
                 cells = row.find_all('td')
                 ky_han = cells[1].text.strip().split()[0]
                 lai_suat = cells[2].text.strip().replace('%', '')
-                
+
                 if int(ky_han) in months:
                     data[f'{int(ky_han)}_thang'] = float(lai_suat) if isinstance(lai_suat, str) else None
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse SSB successfully',
                 'data': data
             }
-                
+
         except Exception as e:
             message = f'Error when parse LS NHTM SSB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_pgb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table')
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             data['khong_ky_han'] = None
-            
+
             for row in rows:
                 cells = row.find_all('td')
-                
+
                 ky_han: str = cells[0].text.strip()
                 lai_suat: str = cells[1].text.strip()
-                
+
                 num_month = int(ky_han.split()[0])
                 if num_month in months:
                     if lai_suat != '' or lai_suat != None:
                         data[f'{num_month}_thang'] = float(lai_suat)
                     else:
                         data[f'{num_month}_thang'] = None
-            
+
             return {
                 'status': 'success',
                 'message': 'Parse PGB successfully',
                 'data': data
             }
-                
+
         except Exception as e:
             message = f'Error when parse LS NHTM PGB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_eib(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             h3_tag = soup.find(lambda tag: tag.name == 'h3' and 'LÃI SUẤT' in tag.string)
             ul_next = h3_tag.find_next('ul')
             vnd_li_inside = ul_next.find('li')
-            
+
             if 'VNĐ' not in vnd_li_inside.text.strip():
                 raise Exception('The structure of the page EIB has changed (VND pdf link is not the first one)')
-            
+
             a_tag = vnd_li_inside.find('a')
             link = f'https://eximbank.com.vn{a_tag["href"]}'
-            
+
             # -----------------------Download the pdf file to temp folder-----------------------
             headers = {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -845,24 +846,24 @@ class LsNhtm(Base):
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"'
             }
-            
+
             response = requests.request("GET", link, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 raise Exception(f'Error when download pdf file from {link}')
-            
+
             download_folder = os.path.join(os.getcwd(), 'download', 'eib')
-            
+
             if os.path.exists(download_folder):
                 shutil.rmtree(download_folder)
             os.makedirs(download_folder, exist_ok=True)
-            
+
             with open(os.path.join(download_folder, 'eib.pdf'), 'wb') as f:
                 f.write(response.content)
-                
+
             # -----------------------Parse the pdf file-----------------------
             result = extract_eib()
-            
+
             if result['status'] == 'error':
                 raise Exception(result['message'])
             else:
@@ -872,86 +873,86 @@ class LsNhtm(Base):
             message = f'Error when parse LS NHTM EIB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_sgb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table')
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             # Khong ky han data
             khong_ky_han_lai_suat = rows[2].find_all('td')[1].text.strip()
-            
+
             if khong_ky_han_lai_suat != '':
                 data['khong_ky_han'] = float(khong_ky_han_lai_suat.replace('%', ''))
             else:
                 data['khong_ky_han'] = None
-            
+
             # The rest data
             for row in rows[4:]:
                 cells = row.find_all('td')
                 ky_han = cells[0].text.strip().split()[0]
                 lai_suat = cells[1].text.strip()
-                
+
                 if int(ky_han) in months:
                     data[f'{int(ky_han)}_thang'] = float(lai_suat.replace('%', '')) if lai_suat != '' else None
-                
+
             return {
                 'status': 'success',
                 'message': 'Parse SGB successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM SGB: {str(e)}'
             print(message)
             return self.error_handler(message)
-        
+
     def parse_ocb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             table = soup.find('table')
             tbody = table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
-            
+
             for rows in rows:
                 cells = rows.find_all('td')
                 ky_han = cells[0].text.strip()
-                
+
                 if ky_han == 'Không kì hạn':
                     data['khong_ky_han'] = float(cells[3].text.strip()) if cells[3].text.strip() != '' else None
                 else:
                     num_month = int(ky_han.split()[0])
                     if num_month in months:
-                        data[f'{num_month}_thang'] = float(cells[3].text.strip()) if cells[3].text.strip() != '' else None
-            
+                        data[f'{num_month}_thang'] = float(
+                            cells[3].text.strip()) if cells[3].text.strip() != '' else None
+
             return {
                 'status': 'success',
                 'message': 'Parse OCB successfully',
                 'data': data
             }
-                
-                
+
         except Exception as e:
             message = f'Error when parse LS NHTM OCB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_vbb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             div_container = soup.find('div', {'id': '3946'})
             a_tag = div_container.find('a')
-            
+
             link = a_tag['href']
-            
+
             # -----------------------Download the pdf file to temp folder-----------------------
             headers = {
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
@@ -968,24 +969,24 @@ class LsNhtm(Base):
                 'sec-ch-ua-mobile': '?0',
                 'sec-ch-ua-platform': '"Windows"'
             }
-            
+
             response = requests.request("GET", link, headers=headers, timeout=10)
-            
+
             if response.status_code != 200:
                 raise Exception(f'Error when download pdf file from {link}')
-            
+
             download_folder = os.path.join(os.getcwd(), 'download', 'vbb')
-            
+
             if os.path.exists(download_folder):
                 shutil.rmtree(download_folder)
             os.makedirs(download_folder, exist_ok=True)
-            
+
             with open(os.path.join(download_folder, 'vbb.pdf'), 'wb') as f:
                 f.write(response.content)
-            
+
             # -----------------------Parse the pdf file-----------------------
             result = extract_vbb()
-            
+
             if result['status'] == 'error':
                 raise Exception(result['message'])
 
@@ -994,14 +995,14 @@ class LsNhtm(Base):
             message = f'Error when parse LS NHTM VBB: {str(e)}'
             print(message)
             return self.error_handler(message)
-    
+
     def parse_abb(self, html_str: str):
         try:
             soup = bs(html_str, 'html.parser')
             first_table = soup.find('table')
             tbody = first_table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
 
@@ -1011,23 +1012,23 @@ class LsNhtm(Base):
 
                 lai_suat = lai_suat.replace('%', '')
                 lai_suat = lai_suat.replace('(*)', '')
-                
+
                 lai_suat = float(lai_suat.strip())
-                
+
                 return lai_suat
-            
+
             for row in rows:
                 cells = row.find_all('td')
-                
+
                 ky_han: str = cells[0].text.strip()
-                
+
                 if not ky_han.isdigit():
                     if ky_han == 'KKH':
                         lai_suat = cells[1].text.strip()
                         data['khong_ky_han'] = xu_li_lai_suat(lai_suat)
                     else:
                         num_month = int(cells[1].text.strip())
-                        
+
                         if num_month in months:
                             lai_suat = cells[2].text.strip()
                             data[f'{num_month}_thang'] = xu_li_lai_suat(lai_suat)
@@ -1036,39 +1037,40 @@ class LsNhtm(Base):
                     if num_month in months:
                         lai_suat = cells[1].text.strip()
                         data[f'{num_month}_thang'] = xu_li_lai_suat(lai_suat)
-                
+
             return {
                 'status': 'success',
                 'message': 'Parse ABB successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             message = f'Error when parse LS NHTM ABB: {traceback.format_exc()}'
             print(message)
             return self.error_handler(message)
-    
+
     def __crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
-        
+
         parse_by_pdf = ['tcb', 'stb', 'vpb', 'hdb', 'eib', 'vbb']
-        parse_by_bs4 = ['vcb', 'mbb', 'bid', 'agr', 'ctg', 'tpb', 'acb', 'vib', 'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb', 'abb']
-        
+        parse_by_bs4 = ['vcb', 'mbb', 'bid', 'agr', 'ctg', 'tpb', 'acb', 'vib',
+                        'bab', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'sgb', 'ocb', 'abb']
+
         if type in parse_by_bs4:
             WebDriverWait(driver, 20).until(
-                EC.presence_of_all_elements_located((By.TAG_NAME, 'table')) # Wait for the table to load
-            ) 
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'table'))  # Wait for the table to load
+            )
         elif type in parse_by_pdf:
             # Wait for all elements loaded
             WebDriverWait(driver, 20).until(
-                EC.presence_of_all_elements_located((By.TAG_NAME, 'a')) # Wait for the link to download pdf file
+                EC.presence_of_all_elements_located((By.TAG_NAME, 'a'))  # Wait for the link to download pdf file
             )
-        
+
         time.sleep(2.5)
-        
+
         html_str = driver.page_source
-        
+
         if type == 'vcb':
             return self.parse_vcb(html_str)
         elif type == 'mbb':
@@ -1135,13 +1137,13 @@ class LsNhtm(Base):
             return self.parse_abb(html_str)
         else:
             raise Exception(f'Cannot find the type {type}')
-            
-        time.sleep(0.5) 
-    
+
+        time.sleep(0.5)
+
     def crawl_selenium(self) -> dict:
         """
             This method used to crawl pages which required to use selenium
-            
+
             Return 
             ```python
             {
@@ -1159,9 +1161,9 @@ class LsNhtm(Base):
             }
             ```
         """
-        
+
         driver = ChromeDriver(headless=False).driver
-        
+
         vcb_url = 'https://www.vietcombank.com.vn/vi-VN/KHCN/Cong-cu-Tien-ich/KHCN---Lai-suat'
         mbb_url = 'https://www.mbbank.com.vn/Fee'
         tcb_url = 'https://techcombank.com/cong-cu-tien-ich/bieu-phi-lai-suat'
@@ -1185,9 +1187,9 @@ class LsNhtm(Base):
         ocb_url = 'https://ocb.com.vn/vi/cong-cu/lai-suat'
         vbb_url = 'https://www.vietbank.com.vn/ca-nhan/ho-tro/lai-suat'
         abb_url = 'https://abbank.vn/thong-tin/lai-suat-tiet-kiem-vnd.html'
-        
+
         # Create a list of tuple ('vcb', vcb_url) of all banks above
-        
+
         banks = [
             ('vcb', vcb_url),
             ('mbb', mbb_url),
@@ -1213,65 +1215,64 @@ class LsNhtm(Base):
             ('vbb', vbb_url),
             ('abb', abb_url)
         ]
-        
+
         data = {}
-        
+
         error_data = {
-            'khong_ky_han' : None,
-            '1_thang' : None,
-            '3_thang' : None,
-            '6_thang' : None,
-            '12_thang' : None,
-            '18_thang' : None,
-            '24_thang' : None,
-            '36_thang' : None,
+            'khong_ky_han': None,
+            '1_thang': None,
+            '3_thang': None,
+            '6_thang': None,
+            '12_thang': None,
+            '18_thang': None,
+            '24_thang': None,
+            '36_thang': None,
         }
-        
+
         error_banks = []
-        
+
         for bank in banks:
             number_of_tried = 0
             while number_of_tried < 3:
                 try:
                     number_of_tried += 1
-                    print(f'Try to crawl "{bank[0]}" {number_of_tried} time(s) ...' )
+                    print(f'Try to crawl "{bank[0]}" {number_of_tried} time(s) ...')
                     result = self.__crawl(driver, bank[0], bank[1])
-                    
+
                     print(result)
-                    
+
                     if result['status'] == 'error':
-                        data[bank[0]] = error_data # If error, set the data to None
+                        data[bank[0]] = error_data  # If error, set the data to None
                     else:
                         data[bank[0]] = result['data']
-                    
+
                     break
                 except Exception as e:
                     print(f'Error when crawl "{bank[0]}": {traceback.format_exc()} ...')
                     continue
-            
+
             if number_of_tried >= 5:
                 error_banks.append(bank[0])
-        
+
         # Close the driver
-        driver.quit() 
-        
+        driver.quit()
+
         # Import the data to schema
         data = SchemaTopic2().lai_suat_nhtm(
             date_created=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
             **data
         )
-        
+
         # Push the data to database
         self.db.update_collection('lai_suat_nhtm', data)
         print('Push data to database successfully')
-        
+
         return
-    
+
     def run(self):
         self.crawl_selenium()
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     lsnhtm = LsNhtm()
     lsnhtm.run()
-        
-        

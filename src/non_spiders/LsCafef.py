@@ -1,22 +1,23 @@
 import json
 import requests
-import os 
+import os
 import sys
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())  # NOQA
 
 from src.non_spiders.Base import Base
 from src.utils.database.schema import SchemaTopic2
 from src.utils.io import write_csv
 from datetime import datetime
 
-class LsCafef(Base): 
+
+class LsCafef(Base):
     def __init__(self):
         super().__init__()
-    
+
     def crawl(self):
         # Fetch data
         number_of_tries = 0
-        
+
         while number_of_tries < 5:
             try:
                 url = "https://msh-pcdata.cafef.vn/graphql"
@@ -36,7 +37,7 @@ class LsCafef(Base):
                     'sec-fetch-site': 'same-site',
                     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
                 }
-                
+
                 number_of_tries += 1
                 print(f'Fetching data from cafef {url}: {number_of_tries} time(s)')
                 response = requests.request("POST", url, headers=headers, data=payload, timeout=10)
@@ -44,25 +45,25 @@ class LsCafef(Base):
             except Exception as e:
                 number_of_tries += 1
                 continue
-        
+
         if number_of_tries == 5:
             print('Cannot fetch data from cafef')
             self.error_handler('Cannot fetch data from cafef')
-        
+
         if response.status_code != 200:
             print('Cannot fetch data from cafef')
             self.error_handler('Cannot fetch data from cafef')
-        
+
         # Parse data
         data_dict = json.loads(response.text)
         print(data_dict)
         data = data_dict['data']['interestRates']
-        
+
         abbank = None
         acb = None
         bacabank = None
         bidv = None
-        bvbank = None 
+        bvbank = None
         viettinbank = None
         eximbank = None
         hdbank = None
@@ -86,7 +87,7 @@ class LsCafef(Base):
         vib = None
         vpbank = None
         agribank = None
-        
+
         for bank in data:
             if bank['symbol'] == 'ABB':
                 for deposit in bank['interestRates']:
@@ -200,10 +201,9 @@ class LsCafef(Base):
                 for deposit in bank['interestRates']:
                     if deposit['deposit'] == 12:
                         agribank = float(deposit['value']) if deposit['value'] != None else None
-                
-        
+
         # Get the schema
-        
+
         new_data = SchemaTopic2().lai_suat_cafef(
             date=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
             abbank=abbank,
@@ -234,7 +234,7 @@ class LsCafef(Base):
             vib=vib,
             vpbank=vpbank,
             agribank=agribank
-        ) 
+        )
 
         # Write data to csv
         print('Exporting data... to csv')
@@ -242,10 +242,10 @@ class LsCafef(Base):
         try:
             file_name = 'lai_suat_cafef.csv'
             file_path = os.path.join(os.getcwd(), 'results', file_name)
-            
+
             data_write_csv = new_data.copy()
             data_write_csv['date'] = self.date_slash
-            
+
             if not os.path.exists(file_path):
                 header = {
                     'date': 'date',
@@ -280,14 +280,14 @@ class LsCafef(Base):
                 }
                 write_csv(file_name=file_path, data=header, mode='w')
                 write_csv(file_name=file_path, data=data_write_csv, mode='a')
-            else: 
+            else:
                 write_csv(file_name=file_path, data=data_write_csv, mode='a')
-            
+
             print('Write data to csv successfully')
         except Exception as e:
             print('An error occurs when writing data to csv: ' + str(e))
             self.error_handler('An error occurs when writing data to csv: ' + str(e))
-        
+
         # Update data to database
         print('Updating data to database...')
         try:
@@ -299,6 +299,7 @@ class LsCafef(Base):
 
     def run(self):
         self.crawl()
+
 
 if __name__ == '__main__':
     ls_cafef = LsCafef()

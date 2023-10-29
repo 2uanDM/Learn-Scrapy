@@ -1,9 +1,9 @@
 import json
 import os
-import shutil 
+import shutil
 import sys
 import time
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())  # NOQA
 
 import requests
 import pandas as pd
@@ -19,6 +19,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from src.utils.database.schema import SchemaTopic2
 from src.utils.io import write_csv
 
+
 class ComodityIndex(Base):
     def __init__(self) -> None:
         return super().__init__()
@@ -26,7 +27,7 @@ class ComodityIndex(Base):
     def get_price_gasoline_vn(self) -> dict:
         '''
             This method is used to get price of gasolines in Vietnam
-            
+
             Return:
             ```python
             {
@@ -56,9 +57,9 @@ class ComodityIndex(Base):
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"'
         }
-        
+
         number_of_try = 0
-        
+
         while number_of_try < 5:
             try:
                 number_of_try += 1
@@ -67,33 +68,32 @@ class ComodityIndex(Base):
                 break
             except Exception as e:
                 continue
-        
+
         if number_of_try == 5:
             return self.error_handler(f'Error when fetching url: {url} of gasoline price in Vietnam: {str(e)}')
 
         if response.status_code != 200:
             return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
-        
-        
+
         html_content = response.text.encode('utf8')
         error_with_table = True
         data = {}
-        
+
         try:
             soup = bs(html_content, 'html.parser')
             xang_vn_table = soup.find('div', {'id': 'cctb-1'})
             tbody = xang_vn_table.find('tbody')
             rows = tbody.find_all('tr')
-            
+
             # RON 95-III
             RON_95_cells = rows[0].find_all('td')
             DO_cells = rows[2].find_all('td')
-            
+
             if RON_95_cells[1].text.strip().find('RON 95-III') != -1 and DO_cells[1].text.strip().find('DO 0,05S-II') != -1:
                 data['RON 95-III'] = float(RON_95_cells[2].text.strip()) * 1000
                 data['DO 0,05S-II'] = float(DO_cells[2].text.strip()) * 1000
                 error_with_table = False
-            
+
             if error_with_table:
                 return self.error_handler(f'Cannot find table of gasoline in {url}')
             return {
@@ -101,19 +101,19 @@ class ComodityIndex(Base):
                 'message': 'Get price of Vietnam gasoline successfully',
                 'data': data
             }
-            
+
         except Exception as e:
             return self.error_handler(f'Error when extracting price of table gasoline in url {url}: {str(e)}')
-    
+
     def get_price_gold_vn(self) -> dict:
         '''
             Get gold price in Vietnam
         '''
 
         url = 'https://www.pnj.com.vn/blog/gia-vang/'
-        
+
         number_of_try = 0
-        
+
         while number_of_try < 5:
             try:
                 number_of_try += 1
@@ -122,13 +122,13 @@ class ComodityIndex(Base):
                 break
             except Exception as e:
                 continue
-        
+
         if number_of_try == 5:
             return self.error_handler(f'Error when fetching url: {url} of gold price in Vietnam: {str(e)}')
 
         if response.status_code != 200:
             return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
-        
+
         try:
             html_content = response.text.encode('utf8')
             soup = bs(html_content, 'html.parser')
@@ -140,17 +140,17 @@ class ComodityIndex(Base):
                 return {
                     'status': 'success',
                     'message': 'Get gold price (SJC 9999) in Vietnam successfully',
-                    'data' : float(sjc_999_cells[2].text.strip().replace(',', '.')) * 10000000
+                    'data': float(sjc_999_cells[2].text.strip().replace(',', '.')) * 10000000
                 }
             else:
                 return self.error_handler(f'Cannot find SJC 9999 in {url}')
         except Exception as e:
             return self.error_handler(f'Error when extracting gold price in url {url}: {str(e)}')
-    
+
     def get_price_steel_vn(self) -> dict:
         '''
             Get steel price in Vietnam (CB240)
-            
+
             Return example:
             ```python
             {
@@ -160,7 +160,7 @@ class ComodityIndex(Base):
             }
             ```
         '''
-        
+
         url = "https://steelonline.vn/price-list"
 
         payload = {}
@@ -179,27 +179,27 @@ class ComodityIndex(Base):
             'upgrade-insecure-requests': '1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
         }
-        
+
         number_of_try = 0
-        
+
         while number_of_try < 5:
             try:
                 number_of_try += 1
                 print(f'Trying to get steel price in Vietnam from {url}: {number_of_try} time(s)')
                 response = requests.request("GET", url, headers=headers, data=payload, timeout=10)
-                break 
+                break
             except Exception as e:
                 continue
-        
+
         if number_of_try == 5:
             return self.error_handler(f'Error when fetching url: {url} of steel price in Vietnam: {str(e)}')
-        
+
         if response.status_code != 200:
             return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
-        
+
         # Parse html content
         html_content = response.text.encode('utf8')
-        
+
         try:
             soup = bs(html_content, 'html.parser')
             body = soup.find('body')
@@ -208,7 +208,7 @@ class ComodityIndex(Base):
             d6_row = rows[2]
             cells = d6_row.find_all('td')
             price_cell = cells
-            
+
             if price_cell[4].text.strip() == '':
                 return self.error_handler(f'Cannot find steel price type D6 in {url}')
             else:
@@ -219,7 +219,7 @@ class ComodityIndex(Base):
                 }
         except Exception as e:
             return self.error_handler(f'Error when extracting steel price in url {url}: {str(e)}')
-        
+
     def get_price_wall_tile_vn(self) -> dict:
         url = "https://viglaceravietnam.com/gach-lat-nen-viglacera-ub304-30x30cm.htm"
         payload = {}
@@ -238,9 +238,9 @@ class ComodityIndex(Base):
             'upgrade-insecure-requests': '1',
             'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/117.0.0.0 Safari/537.36'
         }
-        
+
         number_of_try = 0
-        
+
         while number_of_try < 5:
             try:
                 number_of_try += 1
@@ -249,21 +249,21 @@ class ComodityIndex(Base):
                 break
             except Exception as e:
                 continue
-        
+
         if number_of_try == 5:
             return self.error_handler(f'Error when fetching url: {url} of wall tile price in Vietnam: {str(e)}')
-        
+
         if response.status_code != 200:
             return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
-        
+
         # Parse html content
-        
+
         try:
             html_content = response.text.encode('utf8')
             soup = bs(html_content, 'html.parser')
             info = soup.find('div', {'id': 'infoProduct'})
             price = info.find('span', {'class': 'price'})
-            
+
             if price:
                 if price.text.strip() == '':
                     return self.error_handler('Cannot find price')
@@ -279,13 +279,13 @@ class ComodityIndex(Base):
                 return self.error_handler('Cannot find price')
         except Exception as e:
             return self.error_handler(f'Error when extracting wall tile price in url {url}: {str(e)}')
-            
+
     def get_price_electricity_vn(self) -> dict:
         '''
             Get the electricity price in Vietnam (type 3)
         '''
         url = "https://calc.evn.com.vn/TinhHoaDon/api/Calculate"
-        
+
         current_date: str = datetime.now().strftime('%d/%m/%Y')
         last_moth_date: str = (datetime.strptime(current_date, '%d/%m/%Y') - timedelta(days=29)).strftime('%d/%m/%Y')
 
@@ -299,20 +299,20 @@ class ComodityIndex(Base):
             "NGAY_DGIA": "01/01/1900",
             "HDG_BBAN_APGIA": [
                 {
-                "LOAI_BCS": "KT",
-                "TGIAN_BANDIEN": "KT",
-                "MA_NHOMNN": "SHBT",
-                "MA_NGIA": "A"
+                    "LOAI_BCS": "KT",
+                    "TGIAN_BANDIEN": "KT",
+                    "MA_NHOMNN": "SHBT",
+                    "MA_NGIA": "A"
                 }
             ],
             "GCS_CHISO": [
                 {
-                "BCS": "KT",
-                "SAN_LUONG": "101",
-                "LOAI_CHISO": "DDK"
+                    "BCS": "KT",
+                    "SAN_LUONG": "101",
+                    "LOAI_CHISO": "DDK"
                 }
             ]
-            })
+        })
         headers = {
             'Accept': 'application/json, text/plain, */*',
             'Accept-Language': 'vi,en-US;q=0.9,en;q=0.8,vi-VN;q=0.7',
@@ -328,9 +328,9 @@ class ComodityIndex(Base):
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"'
         }
-        
+
         number_of_try = 0
-        
+
         while number_of_try < 5:
             try:
                 number_of_try += 1
@@ -339,20 +339,20 @@ class ComodityIndex(Base):
                 break
             except Exception as e:
                 continue
-        
+
         if number_of_try == 5:
             return self.error_handler(f'Error when fetching url: {url} of electricity price in Vietnam: {str(e)}')
-        
+
         if response.status_code != 200:
             return self.error_handler(f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}')
-        
+
         try:
             data = json.loads(response.text)
             if data['Data'] == {}:
                 return self.error_handler('Cannot find electricity price. Check the timeframe in payload again!')
 
             list_prices: list = data['Data']['HDN_HDONCTIET']
-            
+
             # print(json.dumps(list_prices, indent=4))
             price_per_kwh_type_3: float = list_prices[-1]['DON_GIA']
 
@@ -363,25 +363,25 @@ class ComodityIndex(Base):
             }
         except Exception as e:
             return self.error_handler(f'Error when extracting electricity price in url {url}: {str(e)}')
-    
+
     def get_metal_price_shfe(self, headless: bool = True, use_proxy: bool = False) -> dict:
         '''
             Get metal price from shfe website using selenium
         '''
-        
+
         auth_proxy = {
-            'host' : '168.227.140.130',
-            'port' : 12345,
-            'username' : 'ebay2023',
-            'password' : 'proxyebaylam'
+            'host': '168.227.140.130',
+            'port': 12345,
+            'username': 'ebay2023',
+            'password': 'proxyebaylam'
         }
-        
+
         download_folder = os.path.join(os.getcwd(), 'download', 'shfe')
-                
+
         if use_proxy:
-            driver = ChromeDriver(headless=headless, 
-                                authenticate_proxy=auth_proxy, 
-                                download_path=download_folder).driver
+            driver = ChromeDriver(headless=headless,
+                                  authenticate_proxy=auth_proxy,
+                                  download_path=download_folder).driver
         else:
             driver = ChromeDriver(headless=headless,
                                   download_path=download_folder).driver
@@ -389,8 +389,8 @@ class ComodityIndex(Base):
         def download_csv(url, driver):
             driver.get(url)
 
-            WebDriverWait(driver,20).until(EC.visibility_of_element_located((
-                By.ID,'product_futures_delayMarket_table'
+            WebDriverWait(driver, 20).until(EC.visibility_of_element_located((
+                By.ID, 'product_futures_delayMarket_table'
             )))
 
             driver.execute_script("""
@@ -417,7 +417,7 @@ class ComodityIndex(Base):
                                 """)
 
             time.sleep(2)
-        
+
         def parse_csv(type: int):
             '''
                 type: int
@@ -427,26 +427,26 @@ class ComodityIndex(Base):
                     2: aluminum
                     ```
             '''
-            if type not in (0,1,2):
+            if type not in (0, 1, 2):
                 print(f'Invalid type: {type} when parsing the csv of shfe')
                 return self.error_handler(f'Invalid type: {type} when parsing the csv of shfe')
-            
+
             file_names = os.listdir(download_folder)
             file_name = f'data_{type}.csv'
-            
+
             if file_name not in file_names:
                 print()
                 return self.error_handler(f'Cannot find csv file: {file_name}')
             try:
                 # Read csv file using pandas
                 df = pd.read_csv(os.path.join(download_folder, file_name), header=1)
-                
+
                 # Get the index of row where Contract is "rb2310"
                 # if type == 0:
                 #     index = df[df['Contract'] == 'rb2310'].index[0]
                 # elif type == 1:
                 #     index = df[df['Contract'] == 'cu2310'].index[0]
-                # else: 
+                # else:
                 #     index = df[df['Contract'] == 'al2310'].index[0]
 
                 # HOT FIX: rb2310 -> rb2311
@@ -454,11 +454,11 @@ class ComodityIndex(Base):
                     index = df[df['Contract'] == 'rb2311'].index[0]
                 elif type == 1:
                     index = df[df['Contract'] == 'cu2311'].index[0]
-                else: 
+                else:
                     index = df[df['Contract'] == 'al2311'].index[0]
-                    
+
                 price = df.iloc[index]['Last']
-                
+
                 if price is None or price == '':
                     return self.error_handler(f'Cannot find price in csv file: {file_name}')
                 else:
@@ -469,22 +469,22 @@ class ComodityIndex(Base):
                     }
             except Exception as e:
                 return self.error_handler(f'Error when parsing csv file: {file_name} of shfe: {str(e)}')
-        
+
         steel_url = 'https://www.shfe.com.cn/eng/market/futures/metal/rb/'
         copper_url = 'https://www.shfe.com.cn/eng/market/futures/metal/cu/'
-        aluminum_url = 'https://www.shfe.com.cn/eng/market/futures/metal/al/' 
-    
+        aluminum_url = 'https://www.shfe.com.cn/eng/market/futures/metal/al/'
+
         shutil.rmtree(download_folder)
         os.makedirs(download_folder, exist_ok=True)
-    
+
         for i, url in enumerate([steel_url, copper_url, aluminum_url]):
             print(f'Accessing url: ', url)
             download_csv(url, driver)
             file_name = f'data_{i}.csv'
             os.rename(os.path.join(download_folder, 'data.csv'), os.path.join(download_folder, file_name))
-        
+
         driver.quit()
-        
+
         # Now parsing newly downloaded csv files
         print('Parsing csvs...')
         try:
@@ -500,7 +500,7 @@ class ComodityIndex(Base):
             return self.error_handler(f'Error when parsing csv files of shfe: {cu_price["message"]}')
         if al_price['status'] == 'error':
             return self.error_handler(f'Error when parsing csv files of shfe: {al_price["message"]}')
-        
+
         return {
             'status': 'success',
             'message': 'Get metal price from shfe successfully',
@@ -510,10 +510,10 @@ class ComodityIndex(Base):
                 'aluminum': al_price['data']
             }
         }
-    
+
     def get_result(self, func, args: tuple = None):
         number_of_try = 0
-        
+
         while number_of_try < 5:
             try:
                 result = func(*args) if args else func()
@@ -525,60 +525,60 @@ class ComodityIndex(Base):
                     return result
             except Exception as e:
                 continue
-        
+
         if number_of_try == 5:
             return self.error_handler(f'Error when getting {func.__name__} results after 5 times:')
-        
+
         if result.get('status') == 'error':
             return self.error_handler(f'Error when getting {func.__name__} results: {result["message"]}')
-    
+
     def run(self):
         errors = []
-        worldwide_gold_price_usd        = None
-        vn_gold_price_vnd               = None
-        ron95_price_vnd                 = None
-        do_price_vnd                    = None
-        brent_oil_price_usd             = None
-        raw_oil_price_usd               = None
-        vn_electric_price_vnd           = None
-        worldwide_steel_price_usd       = None
-        worldwide_copper_price_usd      = None
-        worldwide_aluminium_price_usd   = None
-        china_steel_price_cny           = None
-        china_copper_price_cny          = None
-        china_aluminium_price_cny       = None
-        vn_steel_price_vnd              = None 
-        wall_tiles_price_vnd            = None
-        dji                             = None
-        ssec                            = None 
-        nikkei                          = None 
-        kospi                           = None 
-        dax                             = None 
-        cac40                           = None 
-        ftse100                         = None
-        
+        worldwide_gold_price_usd = None
+        vn_gold_price_vnd = None
+        ron95_price_vnd = None
+        do_price_vnd = None
+        brent_oil_price_usd = None
+        raw_oil_price_usd = None
+        vn_electric_price_vnd = None
+        worldwide_steel_price_usd = None
+        worldwide_copper_price_usd = None
+        worldwide_aluminium_price_usd = None
+        china_steel_price_cny = None
+        china_copper_price_cny = None
+        china_aluminium_price_cny = None
+        vn_steel_price_vnd = None
+        wall_tiles_price_vnd = None
+        dji = None
+        ssec = None
+        nikkei = None
+        kospi = None
+        dax = None
+        cac40 = None
+        ftse100 = None
+
         # ------------------------------------------------------------
-    
+
         worldwide_gold_price_usd = self.get_result(
             self.get_price_vn_investing,
-            ("https://vn.investing.com/currencies/xau-usd",1)
+            ("https://vn.investing.com/currencies/xau-usd", 1)
         )
-        
+
         if worldwide_gold_price_usd['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ("https://vn.investing.com/currencies/xau-usd",1)
+                'args': ("https://vn.investing.com/currencies/xau-usd", 1)
             })
         else:
             worldwide_gold_price_usd = worldwide_gold_price_usd['data']
             print('Worldwide gold price', worldwide_gold_price_usd)
-        
+
         # ------------------------------------------------------------
-        
+
         vn_gold_price_vnd = self.get_result(
             self.get_price_gold_vn
         )
-        
+
         if vn_gold_price_vnd['status'] == 'error':
             errors.append({
                 'func': self.get_price_gold_vn,
@@ -587,12 +587,12 @@ class ComodityIndex(Base):
         else:
             vn_gold_price_vnd = vn_gold_price_vnd['data']
             print('VN gold price', vn_gold_price_vnd)
-            
+
         # ------------------------------------------------------------
         gasoline_price_vn = self.get_result(
             self.get_price_gasoline_vn
         )
-        
+
         if gasoline_price_vn['status'] == 'error':
             errors.append({
                 'func': self.get_price_gasoline_vn,
@@ -602,42 +602,42 @@ class ComodityIndex(Base):
             ron95_price_vnd = gasoline_price_vn['data']['RON 95-III']
             do_price_vnd = gasoline_price_vn['data']['DO 0,05S-II']
             print('Gasoline price', gasoline_price_vn)
-            
+
         # ------------------------------------------------------------
         brent_oil_price_usd = self.get_result(
             self.get_price_vn_investing,
-            ("https://vn.investing.com/commodities/brent-oil-historical-data",3)
+            ("https://vn.investing.com/commodities/brent-oil-historical-data", 3)
         )
-        
+
         if brent_oil_price_usd['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ("https://vn.investing.com/commodities/brent-oil-historical-data",3)
+                'args': ("https://vn.investing.com/commodities/brent-oil-historical-data", 3)
             })
         else:
             brent_oil_price_usd = brent_oil_price_usd['data']
             print('Brent oil price', brent_oil_price_usd)
-        
+
         # ------------------------------------------------------------
         raw_oil_price_usd = self.get_result(
             self.get_price_vn_investing,
-            ("https://vn.investing.com/currencies/wti-usd",1)
+            ("https://vn.investing.com/currencies/wti-usd", 1)
         )
-        
+
         if raw_oil_price_usd['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ("https://vn.investing.com/currencies/wti-usd",1)
+                'args': ("https://vn.investing.com/currencies/wti-usd", 1)
             })
         else:
             raw_oil_price_usd = raw_oil_price_usd['data']
             print('Raw oil price', raw_oil_price_usd)
-        
+
         # ------------------------------------------------------------
         vn_electric_price_vnd = self.get_result(
             self.get_price_electricity_vn
         )
-        
+
         if vn_electric_price_vnd['status'] == 'error':
             errors.append({
                 'func': self.get_price_electricity_vn,
@@ -646,57 +646,57 @@ class ComodityIndex(Base):
         else:
             vn_electric_price_vnd = vn_electric_price_vnd['data']
             print('VN electricity price', vn_electric_price_vnd)
-        
+
         # ------------------------------------------------------------
         worldwide_steel_price_usd = self.get_result(
             self.get_price_vn_investing,
-            ("https://vn.investing.com/commodities/us-steel-coil-futures-streaming-chart",2)
-        )   
-        
+            ("https://vn.investing.com/commodities/us-steel-coil-futures-streaming-chart", 2)
+        )
+
         if worldwide_steel_price_usd['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ("https://vn.investing.com/commodities/us-steel-coil-futures-streaming-chart",2)
+                'args': ("https://vn.investing.com/commodities/us-steel-coil-futures-streaming-chart", 2)
             })
         else:
             worldwide_steel_price_usd = worldwide_steel_price_usd['data']
             print('Worldwide steel price', worldwide_steel_price_usd)
-        
+
         # ------------------------------------------------------------
         worldwide_copper_price_usd = self.get_result(
             self.get_price_vn_investing,
-            ("https://vn.investing.com/commodities/copper",3)
+            ("https://vn.investing.com/commodities/copper", 3)
         )
-        
+
         if worldwide_copper_price_usd['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ("https://vn.investing.com/commodities/copper",3)
+                'args': ("https://vn.investing.com/commodities/copper", 3)
             })
         else:
             worldwide_copper_price_usd = worldwide_copper_price_usd['data']
             print('Worldwide copper price', worldwide_copper_price_usd)
-        
+
         # ------------------------------------------------------------
         worldwide_aluminium_price_usd = self.get_result(
             self.get_price_vn_investing,
-            ("https://vn.investing.com/commodities/aluminum",3)
+            ("https://vn.investing.com/commodities/aluminum", 3)
         )
-        
+
         if worldwide_aluminium_price_usd['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ("https://vn.investing.com/commodities/aluminum",3)
+                'args': ("https://vn.investing.com/commodities/aluminum", 3)
             })
         else:
             worldwide_aluminium_price_usd = worldwide_aluminium_price_usd['data']
             print('Worldwide aluminum price', worldwide_aluminium_price_usd)
-        
+
         # ------------------------------------------------------------
         vn_steel_price_vnd = self.get_result(
             self.get_price_steel_vn
         )
-        
+
         if vn_steel_price_vnd['status'] == 'error':
             errors.append({
                 'func': self.get_price_steel_vn,
@@ -705,12 +705,12 @@ class ComodityIndex(Base):
         else:
             vn_steel_price_vnd = vn_steel_price_vnd['data']
             print('VN steel price', vn_steel_price_vnd)
-        
+
         # ------------------------------------------------------------
         wall_tiles_price_vnd = self.get_result(
             self.get_price_wall_tile_vn
         )
-        
+
         if wall_tiles_price_vnd['status'] == 'error':
             errors.append({
                 'func': self.get_price_wall_tile_vn,
@@ -719,130 +719,130 @@ class ComodityIndex(Base):
         else:
             wall_tiles_price_vnd = wall_tiles_price_vnd['data']
             print('Wall tiles price', wall_tiles_price_vnd)
-        
+
         # ------------------------------------------------------------
         dji = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/us-30-historical-data',3)
+            ('https://vn.investing.com/indices/us-30-historical-data', 3)
         )
-        
+
         if dji['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/us-30-historical-data',3)
+                'args': ('https://vn.investing.com/indices/us-30-historical-data', 3)
             })
         else:
             dji = dji['data']
             print('DJI', dji)
-        
+
         # ------------------------------------------------------------
         ssec = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/shanghai-composite-historical-data',3)
+            ('https://vn.investing.com/indices/shanghai-composite-historical-data', 3)
         )
-        
+
         if ssec['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/shanghai-composite-historical-data',3)
+                'args': ('https://vn.investing.com/indices/shanghai-composite-historical-data', 3)
             })
         else:
             ssec = ssec['data']
             print('SSEC', ssec)
-        
+
         # ------------------------------------------------------------
         nikkei = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/japan-ni225',3)
+            ('https://vn.investing.com/indices/japan-ni225', 3)
         )
 
         if nikkei['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/japan-ni225',3)
+                'args': ('https://vn.investing.com/indices/japan-ni225', 3)
             })
-        else: 
+        else:
             nikkei = nikkei['data']
             print('Nikkei', nikkei)
-        
+
         # ------------------------------------------------------------
         kospi = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/kospi',3)
+            ('https://vn.investing.com/indices/kospi', 3)
         )
-        
+
         if kospi['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/kospi',3)
+                'args': ('https://vn.investing.com/indices/kospi', 3)
             })
         else:
             kospi = kospi['data']
             print('KOSPI', kospi)
-        
+
         # ------------------------------------------------------------
         dax = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/germany-30',3)
+            ('https://vn.investing.com/indices/germany-30', 3)
         )
-        
+
         if dax['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/germany-30',3)
+                'args': ('https://vn.investing.com/indices/germany-30', 3)
             })
-        else: 
+        else:
             dax = dax['data']
             print('DAX', dax)
-        
+
         # ------------------------------------------------------------
         cac40 = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/france-40-historical-data',3)
+            ('https://vn.investing.com/indices/france-40-historical-data', 3)
         )
-        
+
         if cac40['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/france-40-historical-data',3)
+                'args': ('https://vn.investing.com/indices/france-40-historical-data', 3)
             })
         else:
             cac40 = cac40['data']
             print('CAC 40', cac40)
-        
+
         # ------------------------------------------------------------
         ftse100 = self.get_result(
             self.get_price_vn_investing,
-            ('https://vn.investing.com/indices/uk-100-historical-data',3)
+            ('https://vn.investing.com/indices/uk-100-historical-data', 3)
         )
-        
+
         if ftse100['status'] == 'error':
             errors.append({
                 'func': self.get_price_vn_investing,
-                'args': ('https://vn.investing.com/indices/uk-100-historical-data',3)
+                'args': ('https://vn.investing.com/indices/uk-100-historical-data', 3)
             })
         else:
             ftse100 = ftse100['data']
             print('FTSE 100', ftse100)
-        
+
         # ------------------------------------------------------------
-        
+
         metal_shfe = self.get_result(
             self.get_metal_price_shfe,
             (False, False)
         )
-        
+
         if metal_shfe['status'] == 'error':
             errors.append({
                 'func': self.get_metal_price_shfe,
                 'args': None
             })
-        else: 
+        else:
             china_steel_price_cny = metal_shfe['data']['steel']
             china_copper_price_cny = metal_shfe['data']['copper']
             china_aluminium_price_cny = metal_shfe['data']['aluminum']
             print('Shfe metal price', metal_shfe['data'])
-        
+
         # ------------------------------------------------------------
         if len(errors) > 0:
             print('*******Errors*******', len(errors))
@@ -850,7 +850,7 @@ class ComodityIndex(Base):
             return
         else:
             print('*******No errors*******')
-        
+
         new_data = SchemaTopic2().chi_so_hang_hoa(
             date=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
             worldwide_gold_price_usd=float(worldwide_gold_price_usd),
@@ -876,18 +876,14 @@ class ComodityIndex(Base):
             cac40=float(cac40),
             ftse100=float(ftse100)
         )
-        
+
         print('*******New data*******\n', new_data)
-        
+
         # -------------Adding to database-------------------
-        self.db.update_collection('chi_so_hang_hoa',new_data)
+        self.db.update_collection('chi_so_hang_hoa', new_data)
         print('*******Update database successfully*******')
+
 
 if __name__ == '__main__':
     comodity_index = ComodityIndex()
     comodity_index.run()
-    
-    
-    
-    
-    

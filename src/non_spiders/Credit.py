@@ -1,7 +1,7 @@
 import json
-import os 
+import os
 import sys
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())  # NOQA
 
 import requests
 
@@ -10,14 +10,15 @@ from src.non_spiders.Base import Base
 from src.utils.database.schema import SchemaTopic2
 from pymongo.errors import DuplicateKeyError
 
+
 class Credit(Base):
     def __init__(self) -> None:
         super().__init__()
-    
+
     def crawl(self, **kwargs):
         """
         This method is used to crawl the data and pushing it to the database
-        
+
         Args:
         ```
             - headless: bool
@@ -28,7 +29,7 @@ class Credit(Base):
             - token: str
             - cookie: str
         ```
-        
+
         Returns:
             ```
             None
@@ -40,7 +41,7 @@ class Credit(Base):
         to_year = kwargs.get('to_year', datetime.now().year)
         from_month = kwargs.get('from_month', 1)
         to_month = kwargs.get('to_month', 12)
-        
+
         try:
             with open(self.vietstock_config_path, 'r', encoding='utf8') as f:
                 config = json.load(f)
@@ -55,10 +56,10 @@ class Credit(Base):
             )
             result = self.crawl(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month)
             if result['status'] == 'success':
-                return 
+                return
             else:
                 return self.crawl(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month)
-        
+
         # Get the credit from post req
         print('Fetching credit from finance.vietstock.vn...')
         url = "https://finance.vietstock.vn/data/reportdatatopbynormtype"
@@ -80,9 +81,9 @@ class Credit(Base):
             'sec-ch-ua-mobile': '?0',
             'sec-ch-ua-platform': '"Windows"'
         }
-        
+
         number_of_tried = 0
-        
+
         while number_of_tried < 5:
             try:
                 number_of_tried += 1
@@ -91,12 +92,12 @@ class Credit(Base):
                 break
             except Exception as e:
                 continue
-        
+
         if number_of_tried == 5:
             message = f'Cannot fetch credit from {url} after {number_of_tried} times'
             print(message)
             return self.error_handler(message)
-        
+
         if response.status_code != 200:
             message = f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}'
             print(message)
@@ -110,23 +111,23 @@ class Credit(Base):
             message = f'Cannot parse the response from {url} to json: {str(e)}'
             print(message)
             print('Getting cookie and csrf token from finance.vietstock.vn...')
-            
+
             self.generate_cookie_and_csrf_token_finance_vietstock(
                 url='https://finance.vietstock.vn/du-lieu-vi-mo/51/tin-dung.htm',
                 headless=headless
             )
-                
+
             result = self.crawl(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month)
             if result['status'] == 'success':
-                return 
+                return
             else:
                 return self.crawl(from_year=from_year, to_year=to_year, from_month=from_month, to_month=to_month)
-        
-        # Process the data    
-        
-        new_data= []
+
+        # Process the data
+
+        new_data = []
         founded_month = {}
-        
+
         # Find the founded month
         for item in data_dict['data']:
             if item.get('NormValue') is None:
@@ -141,14 +142,14 @@ class Credit(Base):
                         'tang_truong_tin_dung': None,
                         'tang_truong_cung_tien_m2': None
                     }
-        
+
         if founded_month == {}:
             message = f'No new data found'
             print(message)
             return self.error_handler('no_new_data_found')
-        
+
         print(f'Found {len(founded_month)} new month data')
-        
+
         # Find the value of each month
         for item in data_dict['data']:
             if item.get('NormValue') is None:
@@ -156,7 +157,7 @@ class Credit(Base):
             else:
                 report_time: str = item['ReportTime']
                 report_time = report_time.replace('Tháng', '').strip()
-                
+
                 norm_name = item.get('NormName')
                 if norm_name == 'Tăng trưởng Cung tiền M2 (YoY)':
                     founded_month[report_time]['tang_truong_cung_tien_m2'] = item['NormValue']
@@ -166,7 +167,7 @@ class Credit(Base):
                     founded_month[report_time]['cung_tien_m2'] = item['NormValue']
                 elif norm_name == 'Tín dụng (MoM)':
                     founded_month[report_time]['tin_dung'] = item['NormValue']
-        
+
         # Prepare the data to push to the database
         for key, value in founded_month.items():
             month, year = key.split('/')
@@ -185,15 +186,16 @@ class Credit(Base):
             except DuplicateKeyError:
                 print(f'Data for month {month} and year {year} already existed')
                 continue
-        
+
         return {
             'status': 'success',
             'message': 'Insert new data to mongodb successfully',
             'data': None
         }
-    
+
     def run(self):
         self.crawl(headless=True)
+
 
 if __name__ == '__main__':
     credit = Credit()

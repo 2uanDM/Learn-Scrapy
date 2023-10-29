@@ -1,13 +1,13 @@
-from dotenv import load_dotenv
-import datetime
-import polars as pl
-from pydantic import BaseModel, Field
-from pymongo.server_api import ServerApi
-from pymongo.mongo_client import MongoClient
 import pymongo
 import os
 import sys
-sys.path.append(os.getcwd())
+sys.path.append(os.getcwd())  # NOQA
+
+
+from dotenv import load_dotenv
+import polars as pl
+from pymongo.server_api import ServerApi
+from pymongo.mongo_client import MongoClient
 
 
 load_dotenv()
@@ -34,10 +34,10 @@ class MongoDB():
         else:
             raise ValueError('Data must be a list or a dict')
 
-# if __name__=='__main__':
-#     cluster = MongoDB(
-#         cluster='topic2'
-#     )
 
-#     db = cluster.get_db()
-#     db.tin_dung.create_index([('month', pymongo.ASCENDING), ('year', pymongo.ASCENDING)], unique=True)
+if __name__ == '__main__':
+    cluster = MongoDB(
+        cluster='topic2'
+    )
+
+    cluster.update_collection('hehe', {'haha': 'hoho'})
