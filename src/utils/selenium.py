@@ -96,6 +96,8 @@ class ChromeDriver():
         chrome_options = Options()
         chrome_options.add_argument("--window-size=1920,1080")
         chrome_options.add_argument("--log-level=3")
+        chrome_options.add_argument('--ignore-certificate-errors')
+        chrome_options.add_argument('--ignore-ssl-errors')
 
         if self.headless:
             chrome_options.add_argument("--headless")

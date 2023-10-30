@@ -1,8 +1,9 @@
 from datetime import datetime
 from typing import Optional
 
+
 class SchemaTopic2():
-    
+
     def ty_gia(self, date, dollar_index_dxy, usd_vcb, usd_nhnn, eur_vcb, eur_nhnn, cny_vcb, cny_nhnn) -> dict:
         '''
             Return a schema for "ty_gia" collection
@@ -24,9 +25,9 @@ class SchemaTopic2():
             raise ValueError('cny_vcb must be a float')
         if not isinstance(cny_nhnn, float):
             raise ValueError('cny_nhnn must be a float')
-        
+
         return {
-            'date': date,
+            'date_crawled': date,
             'data': {
                 'dollar_index_dxy': dollar_index_dxy,
                 'usd_vnd': {
@@ -43,7 +44,7 @@ class SchemaTopic2():
                 }
             }
         }
-    
+
     def chi_so_hang_hoa(self, date,
                         worldwide_gold_price_usd,
                         vn_gold_price_vnd,
@@ -67,7 +68,7 @@ class SchemaTopic2():
                         dax,
                         cac40,
                         ftse100) -> dict:
-        
+
         # Ensure that the params are valid (all float)
         if not isinstance(date, datetime):
             raise ValueError('date must be a datetime object')
@@ -88,7 +89,7 @@ class SchemaTopic2():
         if not isinstance(worldwide_steel_price_usd, float):
             raise ValueError('worldwide_steel_price_usd must be a float')
         if not isinstance(worldwide_copper_price_usd, float):
-            raise ValueError('worldwide_copper_price_usd must be a float')  
+            raise ValueError('worldwide_copper_price_usd must be a float')
         if not isinstance(worldwide_aluminium_price_usd, float):
             raise ValueError('worldwide_aluminium_price_usd must be a float')
         if not isinstance(china_steel_price_cny, float):
@@ -115,9 +116,9 @@ class SchemaTopic2():
             raise ValueError('cac40 must be a float')
         if not isinstance(ftse100, float):
             raise ValueError('ftse100 must be a float')
-        
+
         data = {
-            'date': date,
+            'date_crawled': date,
             'data': {
                 'worldwide_gold_price_usd': worldwide_gold_price_usd,
                 'vn_gold_price_vnd': vn_gold_price_vnd,
@@ -144,12 +145,12 @@ class SchemaTopic2():
                 'ftse100': ftse100
             }
         }
-        
+
         return data
-        
+
     def lai_suat_lnh(self, date, ls_quadem, ls_1tuan, ls_2tuan, ls_1thang, ls_3thang, ls_6thang, ls_9thang, ls_12thang,
-                     ds_quadem, ds_1tuan, ds_2tuan, ds_1thang, ds_3thang, ds_6thang, ds_9thang, ds_12thang) -> dict: 
-        
+                     ds_quadem, ds_1tuan, ds_2tuan, ds_1thang, ds_3thang, ds_6thang, ds_9thang, ds_12thang) -> dict:
+
         # Ensure that the params are valid (all float)
         if not isinstance(date, datetime):
             raise ValueError('date must be a datetime object')
@@ -169,8 +170,8 @@ class SchemaTopic2():
             raise ValueError('ls_9thang must be a float')
         if (not isinstance(ls_12thang, float)) and (ls_12thang is not None):
             raise ValueError('ls_12thang must be a float')
-        
-        # ----------------------------------------------------------------------    
+
+        # ----------------------------------------------------------------------
 
         if not isinstance(ds_quadem, float):
             raise ValueError('ds_quadem must be a float')
@@ -188,12 +189,12 @@ class SchemaTopic2():
             raise ValueError('ds_9thang must be a float')
         if (not isinstance(ds_12thang, float)) and (ds_12thang is not None):
             raise ValueError('ds_12thang must be a float')
-        
+
         # Create the schema
-        
+
         data = {
-            'date': date,
-            'data' : {
+            'date_crawled': date,
+            'data': {
                 'lai_suat': {
                     'quadem': ls_quadem,
                     '1tuan': ls_1tuan,
@@ -216,16 +217,16 @@ class SchemaTopic2():
                 }
             }
         }
-        
+
         return data
 
-    def lai_suat_cafef(self, date, 
+    def lai_suat_cafef(self, date,
                        abbank, acb, bacabank, bidv, bvbank, viettinbank, eximbank, hdbank, kienlongbank, lienvietpostbank,
                        mbbank, msb, namabank, ncb, ocb, pgbank, saigonbank, shb, seabank, sacombank, techcombank, tpbank, vietabank,
                        vietbank, vietcombank, vib, vpbank, agribank) -> dict:
 
         # Ensure that the params are valid (all float)
-        
+
         if not isinstance(date, datetime):
             raise ValueError('date must be a datetime object')
         if not isinstance(abbank, float):
@@ -284,10 +285,10 @@ class SchemaTopic2():
             raise ValueError('agribank must be a float')
         if not isinstance(sacombank, float):
             raise ValueError('sacombank must be a float')
-        
+
         data = {
-            'date' : date,
-            'data' : {
+            'date_crawled': date,
+            'data': {
                 'abbank': abbank,
                 'acb': acb,
                 'bacabank': bacabank,
@@ -318,9 +319,9 @@ class SchemaTopic2():
                 'agribank': agribank
             }
         }
-        
-        return data 
-    
+
+        return data
+
     def tin_dung(self, date_created, month, year, tin_dung, cung_tien_m2, tang_truong_tin_dung, tang_truong_cung_tien_m2) -> dict:
         # Ensure that the params are valid (all float)
         if not isinstance(date_created, datetime):
@@ -339,57 +340,58 @@ class SchemaTopic2():
             raise ValueError('tang_truong_cung_tien_m2 must be a float')
 
         data = {
-            'date_created': date_created,
+            'date_crawled': date_created,
             'month': month,
             'year': year,
             'data': {
-                'tin_dung' : tin_dung,
+                'tin_dung': tin_dung,
                 'cung_tien_m2': cung_tien_m2,
                 'tang_truong_tin_dung': tang_truong_tin_dung,
                 'tang_truong_cung_tien_m2': tang_truong_cung_tien_m2
             }
         }
-        
+
         return data
-        
+
     def lai_suat_nhtm(self, date_created, **kwargs) -> dict:
-        list_args = ['vcb', 'tcb', 'stb', 'mbb', 'agr', 'bid', 'ctg', 'tpb', 'acb', 'vpb', 'vib', 'bab', 'hdb', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'eib', 'sgb', 'vbb', 'ocb', 'abb'] # ncb is missing
-        
+        list_args = ['vcb', 'tcb', 'stb', 'mbb', 'agr', 'bid', 'ctg', 'tpb', 'acb', 'vpb', 'vib', 'bab',
+                     'hdb', 'nab', 'klb', 'lpb', 'ssb', 'pgb', 'eib', 'sgb', 'vbb', 'ocb', 'abb']  # ncb is missing
+
         if set(kwargs) != set(list_args):
             for arg in kwargs:
                 if arg not in list_args:
                     raise ValueError(f'Invalid argument {arg}')
-            
+
             for arg in list_args:
                 if arg not in kwargs:
                     raise ValueError(f'Argument {arg} is missing')
-        
+
         # Make sure that the params are all valid:
         if not isinstance(date_created, datetime):
             raise ValueError('date_created must be a datetime object')
-        
-        for arg in kwargs:  
+
+        for arg in kwargs:
             dict_format = {
-                'khong_ky_han' : Optional[float] | Optional[int],
-                '1_thang' : Optional[float] | Optional[int],
-                '3_thang' : Optional[float] | Optional[int],
-                '6_thang' : Optional[float] | Optional[int],
-                '9_thang' : Optional[float] | Optional[int],
-                '12_thang' : Optional[float] | Optional[int],
-                '18_thang' : Optional[float] | Optional[int],
-                '24_thang' : Optional[float] | Optional[int],
-                '36_thang' : Optional[float] | Optional[int],
+                'khong_ky_han': Optional[float] | Optional[int],
+                '1_thang': Optional[float] | Optional[int],
+                '3_thang': Optional[float] | Optional[int],
+                '6_thang': Optional[float] | Optional[int],
+                '9_thang': Optional[float] | Optional[int],
+                '12_thang': Optional[float] | Optional[int],
+                '18_thang': Optional[float] | Optional[int],
+                '24_thang': Optional[float] | Optional[int],
+                '36_thang': Optional[float] | Optional[int],
             }
-            
+
             if not isinstance(kwargs[arg], dict):
                 raise ValueError(f'{arg} must be a dict')
-            
+
             for bank in kwargs[arg]:
                 if not isinstance(kwargs[arg][bank], dict_format[bank]):
                     raise ValueError(f'{arg}["{bank}"] must be a float or None')
 
         data = {
-            'date_created': date_created,
+            'date_crawled': date_created,
             'data': {
                 'vcb': kwargs['vcb'],
                 'tcb': kwargs['tcb'],
@@ -416,23 +418,69 @@ class SchemaTopic2():
                 'abb': kwargs['abb']
             }
         }
-        
+
         return data
 
-if __name__=='__main__':
-    
+    def gdp(self, date_crawled, **kwargs) -> dict:
+        list_args = ['date_created', 'quarter', 'year', 'country', 'gdp']
+
+        if set(kwargs) != set(list_args):
+            for arg in kwargs:
+                if arg not in list_args:
+                    raise ValueError(f'Invalid argument {arg}')
+
+            for arg in list_args:
+                if arg not in kwargs:
+                    raise ValueError(f'Argument {arg} is missing')
+
+        # Make sure that the params are all valid:
+        if not isinstance(date_crawled, datetime):
+            raise ValueError('date_crawled must be a datetime object')
+
+        if not isinstance(kwargs['date_created'], datetime):
+            raise ValueError('date_created must be a datetime object')
+
+        if not isinstance(kwargs['quarter'], str):
+            raise ValueError('quarter must be a string')
+
+        if not isinstance(kwargs['year'], int):
+            raise ValueError('year must be an integer')
+
+        if not isinstance(kwargs['country'], str):
+            raise ValueError('country must be a string')
+
+        if kwargs['country'] not in ['VN', 'US', 'CN', 'JP', 'UK', 'GER']:
+            raise ValueError('country must be one of the following: VN, US, CN, JP, UK, GER')
+
+        if not isinstance(kwargs['gdp'], float):
+            raise ValueError('gdp must be a float')
+
+        return {
+            'date_crawled': date_crawled,
+            'data': {
+                'date_created': kwargs['date_created'],
+                'quarter': kwargs['quarter'],
+                'year': kwargs['year'],
+                'country': kwargs['country'],
+                'gdp': kwargs['gdp']
+            }
+        }
+
+
+if __name__ == '__main__':
+
     test_dict = {
-        'khong_ky_han' : None,
-        '1_thang' : None,
-        '3_thang' : None,
-        '6_thang' : None,
-        '9_thang' : None, 
-        '12_thang' : None,
-        '18_thang' : None,
-        '24_thang' : None,
-        '36_thang' : None,
+        'khong_ky_han': None,
+        '1_thang': None,
+        '3_thang': None,
+        '6_thang': None,
+        '9_thang': None,
+        '12_thang': None,
+        '18_thang': None,
+        '24_thang': None,
+        '36_thang': None,
     }
-    
+
     print(SchemaTopic2().lai_suat_nhtm(
         date_created=datetime.now(),
         vcb=test_dict,
