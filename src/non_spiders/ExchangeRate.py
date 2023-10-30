@@ -207,6 +207,8 @@ class ExchangeRate(Base):
             print('An error occurs when saving the exchange rate data to csv: ' + str(e))
             return self.error_handler('An error occurs when saving the exchange rate data to csv: ' + str(e))
 
+        print(new_data)
+
         # Push the data to mongodb
         try:
             self.db.update_collection(

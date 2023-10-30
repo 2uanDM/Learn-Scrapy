@@ -1,1 +1,1 @@
-{"status": "error", "message": "<twisted.python.failure.Failure twisted.internet.error.TCPTimedOutError: TCP connection timed out: 10060: A connection attempt failed because the connected party did not properly respond after a period of time, or established connection failed because connected host has failed to respond..>", "data": null}
+{"status": "success", "USD": "25.251", "EUR": "26.728", "CNY": "3.294,13"}

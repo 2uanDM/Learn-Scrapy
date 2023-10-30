@@ -40,4 +40,4 @@ if __name__ == '__main__':
         cluster='topic2'
     )
 
-    cluster.update_collection('hehe', {'haha': 'hoho'})
+    cluster.update_collection('ty_gia', {'haha': 'hoho'})

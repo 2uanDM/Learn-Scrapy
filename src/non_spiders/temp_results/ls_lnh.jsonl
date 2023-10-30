@@ -1,1 +1,1 @@
-{"status": "error", "message": "<twisted.python.failure.Failure twisted.internet.error.TimeoutError: User timeout caused connection failure.>", "data": null}
+{"status": "success", "data": {"lai_suat": {"Qua đêm": 1.37, "1 Tuần": 1.66, "2 Tuần": 2.03, "1 Tháng": 2.22, "3 Tháng": 3.96, "6 Tháng": 5.22, "9 Tháng": 6.62}, "doanh_so": {"Qua đêm": 228368.0, "1 Tuần": 25732.0, "2 Tuần": 4140.0, "1 Tháng": 4010.0, "3 Tháng": 1969.0, "6 Tháng": 67.0, "9 Tháng": 7.0}}}
