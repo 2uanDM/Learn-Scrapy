@@ -1,4 +1,4 @@
-from src.non_spiders import ComodityIndex, Credit, ExchangeRate, LsCafef, LsLnh, LsNhtm
+from src.non_spiders import ComodityIndex, Credit, ExchangeRate, LsCafef, LsLnh, LsNhtm, Gdp
 import threading
 import sys
 
@@ -9,6 +9,7 @@ if __name__ == '__main__':
     ls_cafef = LsCafef.LsCafef()
     ls_lnh = LsLnh.LsLnh()
     ls_nhtm = LsNhtm.LsNhtm()
+    gdp = Gdp.Gdp()
 
     # Create threads
     commodity_index_thread = threading.Thread(target=commodity_index.run)
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     ls_cafef_thread.join()
     ls_lnh_thread.join()
 
+    gdp.run()
     ls_nhtm.run()  # This one cannot be run in a thread since it use tabula to parse pdf (jvm cannot be run in a thread)
 
     print('All threads finished their jobs')
