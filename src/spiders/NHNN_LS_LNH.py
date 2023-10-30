@@ -8,11 +8,10 @@ from pathlib import Path
 class NHNN_LS_LNH(scrapy.Spider):
     name = 'NHNN_LS_LNH'
     url = 'https://www.sbv.gov.vn/webcenter/portal/vi/menu/rm/ls/lsttlnh'
+
     output = {
         'status': None,
     }
-
-    number_of_retries = 0
 
     def start_requests(self):
         print(f'Start requesting {self.url}')
@@ -80,15 +79,7 @@ class NHNN_LS_LNH(scrapy.Spider):
         return data
 
     def handle_error(self, failure):
-        if self.number_of_retries < 5:
-            self.number_of_retries += 1
-            print(f'Error occurs: {repr(failure)}. Retrying...')
-            self.start_requests()
-        else:
-            self.output['status'] = 'error'
-            self.output['message'] = repr(failure)
-            self.output['data'] = None
-
-            print(f'Error occurs: {repr(failure)}')
-
-            yield self.output
+        self.output['status'] = 'error'
+        self.output['message'] = repr(failure)
+        self.output['data'] = None
+        yield self.output
