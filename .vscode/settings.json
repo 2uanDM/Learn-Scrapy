@@ -5,7 +5,6 @@
     "**/__pycache__": true,
     ".gitattributes": true,
 
-    "src/__init__.py": true,
     "src/items.py": true,
     "src/middlewares.py": true,
     "src/pipelines.py": true
