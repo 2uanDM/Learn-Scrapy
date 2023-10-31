@@ -131,4 +131,4 @@ class ChromeDriver():
         self.driver = webdriver.Chrome(service=webdriver_service, options=chrome_options)
 
         # Set the timeout
-        # self.driver.set_page_load_timeout(120)
+        self.driver.set_page_load_timeout(120)

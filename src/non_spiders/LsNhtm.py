@@ -871,7 +871,7 @@ class LsNhtm(Base):
 
         except Exception as e:
             message = f'Error when parse LS NHTM EIB: {str(e)}'
-            print(message)
+            print(traceback.format_exc())
             return self.error_handler(message)
 
     def parse_sgb(self, html_str: str):
@@ -1049,7 +1049,7 @@ class LsNhtm(Base):
             print(message)
             return self.error_handler(message)
 
-    def __crawl(self, driver, type: str, url: str):
+    def _crawl(self, driver, type: str, url: str):
         # Get the the page
         driver.get(url)
 
@@ -1233,11 +1233,11 @@ class LsNhtm(Base):
 
         for bank in banks:
             number_of_tried = 0
-            while number_of_tried < 3:
+            while number_of_tried < 5:
                 try:
                     number_of_tried += 1
                     print(f'Try to crawl "{bank[0]}" {number_of_tried} time(s) ...')
-                    result = self.__crawl(driver, bank[0], bank[1])
+                    result = self._crawl(driver, bank[0], bank[1])
 
                     print(result)
 
@@ -1275,4 +1275,7 @@ class LsNhtm(Base):
 
 if __name__ == '__main__':
     lsnhtm = LsNhtm()
-    lsnhtm.run()
+    # lsnhtm.run()
+
+    driver = ChromeDriver(headless=False).driver
+    print(lsnhtm._crawl(driver=driver, type='eib', url='https://eximbank.com.vn/khachhangcanhan'))
