@@ -194,7 +194,6 @@ def extract_eib():
 
             # Check if lai_suat_khong_ky_han is not nan
             if not pd.isna(lai_suat_khong_ky_han):
-                print(type(lai_suat_khong_ky_han))
                 lai_suat_khong_ky_han = float(lai_suat_khong_ky_han.replace(',', '.'))
             else:
                 raise Exception('Lai suat khong ky han is nan')

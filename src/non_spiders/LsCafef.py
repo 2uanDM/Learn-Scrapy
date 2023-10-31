@@ -236,58 +236,6 @@ class LsCafef(Base):
             agribank=agribank
         )
 
-        # Write data to csv
-        print('Exporting data... to csv')
-
-        try:
-            file_name = 'lai_suat_cafef.csv'
-            file_path = os.path.join(os.getcwd(), 'results', file_name)
-
-            data_write_csv = new_data.copy()
-            data_write_csv['date'] = self.date_slash
-
-            if not os.path.exists(file_path):
-                header = {
-                    'date': 'date',
-                    'abbank': 'ABB',
-                    'acb': 'ACB',
-                    'bacabank': 'BABA',
-                    'bidv': 'BID',
-                    'bvbank': 'BVB',
-                    'viettinbank': 'CTG',
-                    'eximbank': 'EIB',
-                    'hdbank': 'HDB',
-                    'kienlongbank': 'KLB',
-                    'lienvietpostbank': 'LPB',
-                    'mbbank': 'MBB',
-                    'msb': 'MSB',
-                    'namabank': 'NAB',
-                    'ncb': 'NVB',
-                    'ocb': 'OCB',
-                    'pgbank': 'PGB',
-                    'saigonbank': 'SGB',
-                    'shb': 'SHB',
-                    'seabank': 'SSB',
-                    'sacombank': 'STB',
-                    'techcombank': 'TCB',
-                    'tpbank': 'TPB',
-                    'vietabank': 'VAB',
-                    'vietbank': 'VBB',
-                    'vietcombank': 'VCB',
-                    'vib': 'VIB',
-                    'vpbank': 'VPB',
-                    'agribank': 'agribank'
-                }
-                write_csv(file_name=file_path, data=header, mode='w')
-                write_csv(file_name=file_path, data=data_write_csv, mode='a')
-            else:
-                write_csv(file_name=file_path, data=data_write_csv, mode='a')
-
-            print('Write data to csv successfully')
-        except Exception as e:
-            print('An error occurs when writing data to csv: ' + str(e))
-            self.error_handler('An error occurs when writing data to csv: ' + str(e))
-
         # Update data to database
         print('Updating data to database...')
         try:

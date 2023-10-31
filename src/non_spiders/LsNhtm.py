@@ -1275,7 +1275,7 @@ class LsNhtm(Base):
 
 if __name__ == '__main__':
     lsnhtm = LsNhtm()
-    # lsnhtm.run()
+    lsnhtm.run()
 
-    driver = ChromeDriver(headless=False).driver
-    print(lsnhtm._crawl(driver=driver, type='eib', url='https://eximbank.com.vn/khachhangcanhan'))
+    # driver = ChromeDriver(headless=False).driver
+    # print(lsnhtm._crawl(driver=driver, type='eib', url='https://eximbank.com.vn/khachhangcanhan'))

@@ -68,17 +68,6 @@ class LsLnh(Base):
             ds_12thang=response['data']['doanh_so'].get('12 Tháng', None)
         )
 
-        # ----------------- Write data to csv -----------------
-        print('Exporting data... to csv')
-        try:
-            data_write_csv = new_data.copy()
-            data_write_csv['date'] = self.date_slash
-            write_csv(file_name=self.output_file_path, data=data_write_csv)
-            print('Write data to csv successfully')
-        except Exception as e:
-            print('An error occurs when writing data to csv: ' + str(e))
-            return self.error_handler('An error occurs when writing data to csv: ' + str(e))
-
         # ----------------- Update data to database -----------------
         print('Updating data to database...')
         try:
