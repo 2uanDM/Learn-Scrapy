@@ -4,7 +4,7 @@
     ".venv": true,
     "**/__pycache__": true,
     ".gitattributes": true,
-
+    "scrapy.cfg": true,
     "src/items.py": true,
     "src/middlewares.py": true,
     "src/pipelines.py": true
