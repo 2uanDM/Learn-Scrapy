@@ -190,23 +190,6 @@ class ExchangeRate(Base):
             cny_nhnn=self.__parse_float_for_NHNN(data_NHNN['CNY']),
         )
 
-        #  Save the data to csv
-        try:
-            exchange_rate_file = os.path.join(os.getcwd(), 'results', f'exchange_rate.csv')
-
-            if not os.path.exists(exchange_rate_file):
-                with open(exchange_rate_file, 'w', encoding='utf8') as f:
-                    f.write('Date,Dollar Index DXY, USD/VND - VCB (sell), USD/VND - NHNN (sell), EUR/VND - VCB (sell),  EUR/VND - NHNN (sell), CNY/VND - VCB (sell),  CNY/VND - NHNN (sell)\n')
-
-            data_csv = new_data.copy()
-            data_csv['date'] = data_csv['date'].strftime('%m/%d/%Y')
-
-            write_csv(exchange_rate_file, data_csv, mode='a')
-            print('Save exchange rate data to csv successfully')
-        except Exception as e:
-            print('An error occurs when saving the exchange rate data to csv: ' + str(e))
-            return self.error_handler('An error occurs when saving the exchange rate data to csv: ' + str(e))
-
         print(new_data)
 
         # Push the data to mongodb
