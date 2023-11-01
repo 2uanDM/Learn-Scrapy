@@ -17,7 +17,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
 from src.utils.database.schema import SchemaTopic2
-from src.utils.io import write_csv
 
 
 class ComodityIndex(Base):
@@ -887,3 +886,5 @@ class ComodityIndex(Base):
 if __name__ == '__main__':
     comodity_index = ComodityIndex()
     comodity_index.run()
+
+    # comodity_index.get_metal_price_shfe(headless=False, use_proxy=True)
