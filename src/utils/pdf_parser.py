@@ -1,3 +1,4 @@
+import re
 import traceback
 import tabula
 import sys
@@ -189,8 +190,10 @@ def extract_eib():
             pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
             df = pd.DataFrame(pdfData[0])
 
-            # Khong ky han data
-            lai_suat_khong_ky_han = df.iloc[4, 6]
+            # print(df)
+
+            # lai_suat_khong_ky_han = df.iloc[4, 6]
+            lai_suat_khong_ky_han = df.iloc[5, 3]
 
             # Check if lai_suat_khong_ky_han is not nan
             if not pd.isna(lai_suat_khong_ky_han):
@@ -202,16 +205,26 @@ def extract_eib():
 
             months = [1, 3, 6, 9, 12, 18, 24, 36]
 
-            cutted_df = df.iloc[5:25, [0, 6]]
+            # cutted_df = df.iloc[5:25, [0, 6]]
+            cutted_df = df.iloc[5:25, [0, 3]]
+
+            print(cutted_df)
+
             cutted_df.columns = ['ky_han', 'lai_suat']
             cutted_df.reset_index(drop=True, inplace=True)
 
+            # Create a regex pattern that has the format "\d+ tháng"
+            pattern = re.compile(r'\d+ tháng')
+
             for idx, row in cutted_df.iterrows():
-                ky_han = row['ky_han']
-                lai_suat = row['lai_suat']
-                num_month = int(ky_han.split(' ')[0])
-                if num_month in months:
-                    data[f'{num_month}_thang'] = float(lai_suat.replace(',', '.')) if lai_suat is not None else None
+                if pattern.search(row['ky_han']) is None:
+                    continue
+                else:
+                    ky_han = pattern.search(row['ky_han']).group(0)
+                    lai_suat = row['lai_suat']
+                    num_month = int(ky_han.split(' ')[0])
+                    if num_month in months:
+                        data[f'{num_month}_thang'] = float(lai_suat.replace(',', '.')) if lai_suat is not None else None
 
             return {
                 'status': 'success',
