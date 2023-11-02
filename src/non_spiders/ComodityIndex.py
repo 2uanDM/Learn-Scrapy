@@ -363,23 +363,16 @@ class ComodityIndex(Base):
         except Exception as e:
             return self.error_handler(f'Error when extracting electricity price in url {url}: {str(e)}')
 
-    def get_metal_price_shfe(self, headless: bool = True, use_proxy: bool = False) -> dict:
+    def get_metal_price_shfe(self, headless: bool = True, proxy=None) -> dict:
         '''
             Get metal price from shfe website using selenium
         '''
 
-        auth_proxy = {
-            'host': '168.227.140.130',
-            'port': 12345,
-            'username': 'ebay2023',
-            'password': 'proxyebaylam'
-        }
-
         download_folder = os.path.join(os.getcwd(), 'download', 'shfe')
 
-        if use_proxy:
+        if proxy:
             driver = ChromeDriver(headless=headless,
-                                  authenticate_proxy=auth_proxy,
+                                  authenticate_proxy=proxy,
                                   download_path=download_folder).driver
         else:
             driver = ChromeDriver(headless=headless,
@@ -531,7 +524,7 @@ class ComodityIndex(Base):
         if result.get('status') == 'error':
             return self.error_handler(f'Error when getting {func.__name__} results: {result["message"]}')
 
-    def run(self):
+    def run(self, proxy=None):
         errors = []
         worldwide_gold_price_usd = None
         vn_gold_price_vnd = None
@@ -828,7 +821,7 @@ class ComodityIndex(Base):
 
         metal_shfe = self.get_result(
             self.get_metal_price_shfe,
-            (False, False)
+            (False, proxy)  # headless, use_proxy
         )
 
         if metal_shfe['status'] == 'error':
