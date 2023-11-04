@@ -24,110 +24,56 @@ class ExchangeRate(Base):
 
         return self.get_price_vn_investing(url=url, type=2)
 
-    def __parse_excel_file(self, file_dir: str) -> dict:
-        '''
-            Return data = 
-            ```python
-            {
-                'USD': {
-                    'buy_cash': 23000,
-                    'buy_transfer': 23000,
-                    'sell': 23000
-                },
-                ...
-            }
-            ```
-        '''
-        output: dict = {}
+    def get_exchange_rate_VCB(self):
+        """
+            Run the spider to get the exchange rate from VCB website in form of jsonl file
+        """
+        print('Getting exchange rate from VCB website...')
+        save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results')
+        run_crawler(spider_name='VCB_ExchangeRate', nolog=True,
+                    filename='vcb_exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
 
         try:
-            df = pd.read_excel(file_dir, engine='openpyxl')
-            # Just get the 3 row of USD, EUR, CNY
-            df = df.iloc[[21, 7, 5]]
-            # Rename columns
-            df.columns = ['Name', 'Symbol', 'Buy Cash', 'Buy Transfer', 'Sell']
-            # Reset index
-            df = df.reset_index(drop=True)
-            # Extracting data
-            for row in df.iterrows():
-                symbols = ['USD', 'EUR', 'CNY']
-                current_symbol = row[1]['Symbol']
-                if current_symbol in symbols:
-                    output[current_symbol] = {
-                        'buy_cash': row[1]['Buy Cash'],
-                        'buy_transfer': row[1]['Buy Transfer'],
-                        'sell': row[1]['Sell']
-                    }
-
-            return output
+            with open(os.path.join(save_folder, 'vcb_exchange_rate.jsonl'), 'r') as f:
+                data = json.load(f)
         except Exception as e:
-            return self.error_handler('An error occurs when parsing the exchange rate Excel file: ' + str(e))
+            message = 'An error occurs when reading the exchange rate jsonl file: ' + str(e)
+            return self.error_handler(message)
 
-    def get_exchange_rate_VCB(self, date_dash: str):
-        '''
-            date_dash: str, format: '%Y-%m-%d'
-        '''
+        if data['status'] == 'error':
+            message = 'An error occurs when getting the exchange rate from VCB website:' + data['message']
+            return self.error_handler(message)
 
-        # Download excel files
-        print('Downloading exchange rate from VCB website...')
-
-        url = f'https://www.vietcombank.com.vn/api/exchangerates/exportexcel?date={date_dash}'
+        # Process data:
+        exrate_to_get = {}
 
         try:
-            response = requests.get(url=url, timeout=10)
+            exchange_rate_prices: list = data['data']['ExrateList']['Exrate']
+
+            for item in exchange_rate_prices:
+                currency_code = item['@CurrencyCode']
+                if currency_code in ['USD', 'EUR', 'CNY']:
+                    exrate_to_get[currency_code] = item['@Sell']
+
         except Exception as e:
-            message = f'An error occurs: {str(e)}'
-            return self.error_handler(message)
-        if response.status_code != 200:
-            message = f'Response status code when fetcing url: {url} is not 200. Status code: {response.status_code}'
+            message = 'An error occurs when processing the exchange rate data: ' + str(e)
             return self.error_handler(message)
 
-        data = json.loads(response.text)
-        if data['FileName'] is not None:
-            # Download excel file to local
-            try:
-                file_name = data["FileName"]
-                save_folder = os.path.join(os.getcwd(), 'download')
-                os.makedirs(save_folder, exist_ok=True)
-                save_dir = os.path.join(save_folder, file_name)
-
-                data = base64.b64decode(data['Data'])
-                with io.open(save_dir, 'wb') as f:
-                    f.write(data)
-
-                print(f'Save exchange rate excel file: {file_name} successfully')
-            except Exception as e:
-                return self.error_handler('An error occurs when saving the exchange rate excel file: ' + str(e))
-        else:
-            message = f'Does not have exchange rate file for today: {self.date_slash}'
-            return self.error_handler(message)
-
-        # Parse excel file
-        print('Parsing exchange rate excel file...')
-        try:
-            data = self.__parse_excel_file(save_dir)
-        except Exception as e:
-            message = 'An error occurs when parsing the exchange rate excel file: ' + str(e)
-            return self.error_handler(message)
-
-        # Delete excel file
-        os.remove(save_dir)
-        print('Delete exchange rate excel file successfully')
-
+        print('Get exchange rate from VCB website successfully')
         return {
             'status': 'success',
-            'message': 'Get exchange rate successfully',
-            'data': data
+            'message': 'Get exchange rate from VCB successfully',
+            'data': exrate_to_get
         }
 
     def get_exchange_rate_NHNN(self):
         print('Getting exchange rate from NHNN website...')
         save_folder = os.path.join(os.getcwd(), 'src', 'non_spiders', 'temp_results')
         run_crawler(spider_name='NHNN_ExchangeRate', nolog=True,
-                    filename='exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
+                    filename='nhnn_exchange_rate.jsonl', save_folder=save_folder, overwrite=True)
 
         try:
-            with open(os.path.join(save_folder, 'exchange_rate.jsonl'), 'r') as f:
+            with open(os.path.join(save_folder, 'nhnn_exchange_rate.jsonl'), 'r') as f:
                 data = json.load(f)
         except Exception as e:
             message = 'An error occurs when reading the exchange rate jsonl file: ' + str(e)
@@ -141,7 +87,7 @@ class ExchangeRate(Base):
         return {
             'status': 'success',
             'message': 'Get exchange rate from NHNN successfully',
-            'data': data
+            'data': data['data']
         }
 
     def run(self):
@@ -156,7 +102,7 @@ class ExchangeRate(Base):
 
         # ---------====================Parse the exchange rate from VCB====================---------
         print('-'*100)
-        response_VCB = self.get_exchange_rate_VCB(self.date_dash)
+        response_VCB = self.get_exchange_rate_VCB()
         if response_VCB['status'] == 'error':
             print(response_VCB['message'])
             return
@@ -182,11 +128,11 @@ class ExchangeRate(Base):
         new_data = SchemaTopic2().ty_gia(
             date=datetime.strptime(self.date_slash.strip(), '%m/%d/%Y'),
             dollar_index_dxy=float(response_dollar_index['data']),
-            usd_vcb=data_VCB['USD']['sell'],
+            usd_vcb=self.__parse_float_for_VCB(data_VCB['USD']),
             usd_nhnn=self.__parse_float_for_NHNN(data_NHNN['USD']),
-            eur_vcb=data_VCB['EUR']['sell'],
+            eur_vcb=self.__parse_float_for_VCB(data_VCB['EUR']),
             eur_nhnn=self.__parse_float_for_NHNN(data_NHNN['EUR']),
-            cny_vcb=data_VCB['CNY']['sell'],
+            cny_vcb=self.__parse_float_for_VCB(data_VCB['CNY']),
             cny_nhnn=self.__parse_float_for_NHNN(data_NHNN['CNY']),
         )
 
@@ -204,7 +150,7 @@ class ExchangeRate(Base):
             print('An error occurs when creating new data for mongodb: ' + str(e))
             return self.error_handler('An error occurs when creating new data for mongodb: ' + str(e))
 
-    def __parse_float_for_NHNN(self, value: str):
+    def __parse_float_for_NHNN(self, value: str) -> float:
         if value.find(',') != -1:
             integer, decimal = value.split(',')
             integer = integer.replace('.', '')
@@ -213,7 +159,14 @@ class ExchangeRate(Base):
             integer = value.replace('.', '')
             return float(integer)
 
+    def __parse_float_for_VCB(self, value: str) -> float:
+        return float(value.replace(',', ''))
+
 
 if __name__ == '__main__':
     exchange_rate = ExchangeRate()
     exchange_rate.run()
+
+    # data = exchange_rate.get_exchange_rate_VCB()
+    # data1 = exchange_rate.get_exchange_rate_NHNN()
+    # print(json.dumps(data, indent=4, ensure_ascii=True))
