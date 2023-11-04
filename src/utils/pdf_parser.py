@@ -180,6 +180,7 @@ def extract_hdb():
 
 
 def extract_eib():
+    option: int = 1
     try:
         eib_folder = os.path.join(os.getcwd(), 'download', 'eib')
         files = os.listdir(eib_folder)
@@ -190,25 +191,34 @@ def extract_eib():
             pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
             df = pd.DataFrame(pdfData[0])
 
-            # print(df)
+            print(df)
 
-            # lai_suat_khong_ky_han = df.iloc[4, 6]
             lai_suat_khong_ky_han = df.iloc[5, 3]
 
             # Check if lai_suat_khong_ky_han is not nan
             if not pd.isna(lai_suat_khong_ky_han):
-                lai_suat_khong_ky_han = float(lai_suat_khong_ky_han.replace(',', '.'))
+                if not isinstance(lai_suat_khong_ky_han, float):
+                    lai_suat_khong_ky_han = float(lai_suat_khong_ky_han.replace(',', '.'))
             else:
-                raise Exception('Lai suat khong ky han is nan')
+                option = 2
+                print('Option 1 is not available, use option 2 instead')
+                lai_suat_khong_ky_han = df.iloc[4, 6]
+                if pd.isna(lai_suat_khong_ky_han):
+                    raise Exception('Both option 1 and option 2 are not available')
+                else:
+                    if not isinstance(lai_suat_khong_ky_han, float):
+                        lai_suat_khong_ky_han = float(lai_suat_khong_ky_han.replace(',', '.'))
 
             data = {'khong_ky_han': lai_suat_khong_ky_han}
 
             months = [1, 3, 6, 9, 12, 18, 24, 36]
 
-            # cutted_df = df.iloc[5:25, [0, 6]]
-            cutted_df = df.iloc[5:25, [0, 3]]
+            if option == 1:
+                cutted_df = df.iloc[5:25, [0, 3]]
+            elif option == 2:
+                cutted_df = df.iloc[5:25, [0, 6]]
 
-            print(cutted_df)
+            # print(cutted_df)
 
             cutted_df.columns = ['ky_han', 'lai_suat']
             cutted_df.reset_index(drop=True, inplace=True)
