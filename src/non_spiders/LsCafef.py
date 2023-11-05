@@ -48,11 +48,11 @@ class LsCafef(Base):
 
         if number_of_tries == 5:
             print('Cannot fetch data from cafef')
-            self.error_handler('Cannot fetch data from cafef')
+            return self.error_handler('Cannot fetch data from cafef')
 
         if response.status_code != 200:
             print('Cannot fetch data from cafef')
-            self.error_handler('Cannot fetch data from cafef')
+            return self.error_handler('Cannot fetch data from cafef')
 
         # Parse data
         data_dict = json.loads(response.text)
@@ -243,7 +243,7 @@ class LsCafef(Base):
             print('Update data to database successfully')
         except Exception as e:
             print('An error occurs when updating data to database: ' + str(e))
-            self.error_handler('An error occurs when updating data to database: ' + str(e))
+            return self.error_handler('An error occurs when updating data to database: ' + str(e))
 
     def run(self):
         self.crawl()

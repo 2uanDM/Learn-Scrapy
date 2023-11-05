@@ -104,6 +104,9 @@ def extract_vpb():
             file_path = os.path.join(vpb_folder, 'vpb.pdf')
             pdfData = tabula.read_pdf(file_path, pages=2, multiple_tables=True, encoding='utf-8')
             df = pd.DataFrame(pdfData[1])
+
+            print(df)
+
             df = df.iloc[[1, 4, 5], 2:19]
             df.reset_index(drop=True, inplace=True)
 
@@ -191,7 +194,7 @@ def extract_eib():
             pdfData = tabula.read_pdf(file_path, pages=1, multiple_tables=True, encoding='utf-8')
             df = pd.DataFrame(pdfData[0])
 
-            print(df)
+            # print(df)
 
             lai_suat_khong_ky_han = df.iloc[5, 3]
 
@@ -263,9 +266,11 @@ def extract_vbb():
             pdfData = tabula.read_pdf(file_path, pages=1, encoding='utf-8')
             df = pd.DataFrame(pdfData[0])
 
-            cutted_df = df.iloc[2:22, [0, 1]]
+            cutted_df = df.iloc[2:, [0, 1]]
             cutted_df.columns = ['ky_han', 'lai_suat']
             cutted_df.reset_index(drop=True, inplace=True)
+
+            print(cutted_df)
 
             data = {}
             months = [1, 3, 6, 9, 12, 18, 24, 36]
@@ -303,5 +308,5 @@ if __name__ == '__main__':
     # print(extract_stb())
     # print(extract_vpb())
     # print(extract_hdb())
-    print(extract_eib())
-    # print(extract_vbb())
+    # print(extract_eib())
+    print(extract_vbb())
