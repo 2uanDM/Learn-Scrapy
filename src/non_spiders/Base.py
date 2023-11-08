@@ -1,7 +1,6 @@
 import json
 import os
 import sys
-import time
 sys.path.append(os.getcwd())  # NOQA
 
 import requests

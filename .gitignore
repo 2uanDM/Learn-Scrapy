@@ -153,3 +153,5 @@ cython_debug/
 jre
 # All folder name test
 src/test
+
+error/error.log
